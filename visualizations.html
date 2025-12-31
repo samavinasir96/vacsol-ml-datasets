@@ -1,27 +1,149 @@
-<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VacSol-ML Visualizations</title>
 
-<div id="classDist"></div>
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+
+  <!-- PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    p {
+      max-width: 900px;
+    }
+
+    .plot-container {
+      margin-top: 40px;
+    }
+
+    .plot {
+      width: 100%;
+      height: 450px;
+    }
+
+    select {
+      padding: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>VacSol-ML Dataset Visualizations</h1>
+<p>
+Interactive summaries of the VacSol-ML datasets, highlighting class distribution,
+organism composition, and immunological score characteristics.
+</p>
+
+<label><strong>Select Dataset:</strong></label><br>
+<select id="datasetSelect">
+  <option value="VacSol-ML Dataset.csv">Processed Dataset</option>
+  <option value="VacSol-ML_DataSet_new_original.csv">Original Dataset</option>
+</select>
+
+<!-- ===================== -->
+<!-- CLASS DISTRIBUTION -->
+<!-- ===================== -->
+<div class="plot-container">
+  <h2>Class Distribution</h2>
+  <div id="classPlot" class="plot"></div>
+</div>
+
+<!-- ===================== -->
+<!-- ORGANISM DISTRIBUTION -->
+<!-- ===================== -->
+<div class="plot-container">
+  <h2>Organism-wise Sample Distribution</h2>
+  <div id="organismPlot" class="plot"></div>
+</div>
+
+<!-- ===================== -->
+<!-- MHCI SCORE -->
+<!-- ===================== -->
+<div class="plot-container">
+  <h2>MHCI Score Distribution</h2>
+  <div id="mhciPlot" class="plot"></div>
+</div>
+
+<!-- ===================== -->
+<!-- MHCII SCORE -->
+<!-- ===================== -->
+<div class="plot-container">
+  <h2>MHCII Score Distribution</h2>
+  <div id="mhciiPlot" class="plot"></div>
+</div>
 
 <script>
-Papa.parse("VacSol-ML Dataset.csv", {
-  download: true,
-  header: true,
-  complete: function(results) {
+function loadVisualizations(file) {
 
-    let counts = {0:0, 1:0};
+  Papa.parse(file, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
 
-    results.data.forEach(r => {
-      if (r.Final_predictions !== undefined)
-        counts[r.Final_predictions]++;
-    });
+    complete: function(results) {
 
-    Plotly.newPlot("classDist", [{
-      values: Object.values(counts),
-      labels: ["Non-binder", "Binder"],
-      type: "pie"
-    }], {
-      title: "Class Distribution (Final_predictions)"
-    });
-  }
-});
-</script>
+      const data = results.data;
+
+      /* =========================
+         CLASS DISTRIBUTION
+      ========================== */
+      let classCounts = { "Non-binder": 0, "Binder": 0 };
+
+      data.forEach(row => {
+        if (row.Final_predictions === "1" || row.Final_predictions === 1)
+          classCounts["Binder"]++;
+        else if (row.Final_predictions === "0" || row.Final_predictions === 0)
+          classCounts["Non-binder"]++;
+      });
+
+      Plotly.newPlot("classPlot", [{
+        values: Object.values(classCounts),
+        labels: Object.keys(classCounts),
+        type: "pie"
+      }], {
+        title: "Binder vs Non-binder Distribution"
+      });
+
+      /* =========================
+         ORGANISM DISTRIBUTION
+      ========================== */
+      let orgCounts = {};
+
+      data.forEach(row => {
+        if (row.Organism) {
+          orgCounts[row.Organism] = (orgCounts[row.Organism] || 0) + 1;
+        }
+      });
+
+      Plotly.newPlot("organismPlot", [{
+        x: Object.keys(orgCounts),
+        y: Object.values(orgCounts),
+        type: "bar"
+      }], {
+        title: "Samples per Organism",
+        xaxis: { tickangle: -45 }
+      });
+
+      /* =========================
+         MHCI SCORE DISTRIBUTION
+      ========================== */
+      let mhciScoresBinder = [];
+      let mhciScoresNonBinder = [];
+
+      data.forEach(row => {
+        let score = parseFloat(row.mhci_score);
+        if (!isNaN(s
