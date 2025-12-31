@@ -1,0 +1,50 @@
+<link rel="stylesheet"
+ href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+Papa.parse("VacSol-ML%20Dataset.csv", {
+  download: true,
+  header: true,
+  complete: function(results) {
+
+    let columns = Object.keys(results.data[0]).map(col => ({
+      title: col,
+      data: col
+    }));
+
+    $('#datasetTable').DataTable({
+      data: results.data,
+      columns: columns,
+      scrollX: true,
+      pageLength: 10
+    });
+  }
+});
+</script>
+<script>
+Papa.parse("VacSol-ML_DataSet_new_original.csv", {
+  download: true,
+  header: true,
+  complete: function(results) {
+
+    let columns = Object.keys(results.data[0]).map(col => ({
+      title: col,
+      data: col
+    }));
+
+    $('#datasetTable').DataTable({
+      data: results.data,
+      columns: columns,
+      scrollX: true,
+      pageLength: 10
+    });
+  }
+});
+</script>
+<table id="datasetTable" class="display" style="width:100%"></table>
+<a href="VacSol-ML%20Dataset.csv" download>⬇ Download Dataset</a>
+<a href="VacSol-ML_DataSet_new_original.csv" download>⬇ Download Dataset</a>
+
