@@ -54,40 +54,55 @@
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Dataset 1: Lag Features
-            $('#table1').DataTable({
-                ajax: { url: 'VacSol-ML Dataset.csv', dataSrc: '' },  // Assumes CSV headers match
-                columns: [  // Explicit for first few; auto for rest
-                    { data: 'Protein_ID' }, { data: 'Organism' },
-                    // Add more if needed, e.g., { data: 'CIDH920105.lag1' }
-                    // For auto: DataTables infers from headers
-                ],
-                scrollX: true,  // Horizontal scroll for wide table
-                pageLength: 25,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                searching: true,
-                ordering: true,
-                columnDefs: [{ targets: '_all', className: 'dt-center' }]  // Optional: Center align
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>  <!-- Add PapaParse -->
+<script>
+    $(document).ready(function() {
+        // Function to load CSV with PapaParse
+        function loadCSV(tableId, csvFile, columns) {
+            Papa.parse(csvFile, {
+                download: true,
+                header: true,
+                dynamicTyping: true,  // Auto-detect numbers (e.g., lags as floats)
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        console.error('CSV Parse Errors:', results.errors);
+                        return;
+                    }
+                    var table = $(tableId).DataTable({
+                        data: results.data,  // Parsed JSON-like array
+                        columns: columns,
+                        scrollX: true,
+                        pageLength: 25,
+                        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                        searching: true,
+                        ordering: true,
+                        columnDefs: [{ targets: '_all', className: 'dt-center' }]
+                    });
+                    // Update entry count
+                    var info = table.page.info();
+                    $(tableId).closest('.tab-pane').find('p').prepend('Showing ' + info.recordsTotal + ' entries. ');
+                }
             });
+        }
 
-            // Dataset 2: Physicochemical & Auto Features
-            $('#table2').DataTable({
-                ajax: { url: 'VacSol-ML_DataSet_new_original.csv', dataSrc: '' },
-                columns: [
-                    { data: 'Protein_ID' }, { data: 'aa_no' }, { data: 'molecular_weight' },
-                    { data: 'pH_charge' }, { data: 'isoelectric point' }, { data: 'Hydropathy_gravy' }
-                    // Auto for rest (e.g., instability_index, GearyAuto_Hydrophobicity1, etc.)
-                ],
-                scrollX: true,
-                pageLength: 25,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                searching: true,
-                ordering: true,
-                columnDefs: [{ targets: '_all', className: 'dt-center' }]
-            });
-        });
-    </script>
+        // Dataset 1: Lag Features (auto-detects all columns from CSV headers)
+        loadCSV('#table1', 'VacSol-ML Dataset.csv', [
+            { data: 'Protein_ID' },
+            { data: 'Organism' }
+            // PapaParse auto-maps the rest; add more explicit if needed, e.g., { data: 'CIDH920105.lag1' }
+        ]);
+
+        // Dataset 2: Physicochemical & Auto Features
+        loadCSV('#table2', 'VacSol-ML_DataSet_new_original.csv', [
+            { data: 'Protein_ID' },
+            { data: 'aa_no' },
+            { data: 'molecular_weight' },
+            { data: 'pH_charge' },
+            { data: 'isoelectric point' },
+            { data: 'Hydropathy_gravy' }
+            // Auto-maps the rest
+        ]);
+    });
+</script>
 </body>
 </html>
