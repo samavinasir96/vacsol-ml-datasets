@@ -3,106 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VacSol-ML Datasets Viewer</title>
-    <!-- Bootstrap CSS for tabs -->
+    <title>VacSol-ML Interactive Visualizations</title>
+    <!-- Bootstrap for tabs -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Plotly CSS -->
+    <link rel="stylesheet" href="https://cdn.plot.ly/plotly-2.35.2.min.css">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .dataTables_wrapper { margin-top: 20px; }
-        .table-container { max-width: 100%; overflow-x: auto; }
+        .chart-container { height: 500px; margin: 20px 0; }
+        .tab-pane { padding: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">VacSol-ML Datasets</h1>
-        <ul class="nav nav-tabs" id="datasetTabs" role="tablist">
+        <h1 class="text-center mb-4">VacSol-ML Datasets: Interactive Visualizations</h1>
+        <p class="text-center">Explore lag features & physicochemical properties for ESKAPE vaccine prediction. Hover/zoom for details.</p>
+        <ul class="nav nav-tabs" id="vizTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button">Dataset 1: Lag Features (362 entries)</button>
+                <button class="nav-link active" id="tab1-viz" data-bs-toggle="tab" data-bs-target="#tab1" type="button">Dataset 1: Lag Features (362 Proteins)</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button">Dataset 2: Physicochemical & Auto Features (412 entries)</button>
+                <button class="nav-link" id="tab2-viz" data-bs-toggle="tab" data-bs-target="#tab2" type="button">Dataset 2: Physicochemical (412 Proteins)</button>
             </li>
         </ul>
-        <div class="tab-content" id="datasetTabsContent">
+        <div class="tab-content" id="vizTabsContent">
             <div class="tab-pane fade show active" id="tab1" role="tabpanel">
-                <p><a href="VacSol-ML Dataset.csv" download>Download CSV</a></p>
-                <div class="table-container">
-                    <table id="table1" class="table table-striped table-bordered" style="width:100%">
-                        <thead><tr><th>Protein_ID</th><th>Organism</th><!-- Auto-detects rest --></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+                <p><a href="VacSol-ML Dataset.csv" download>Download CSV</a> | PCA Embed: <a href="pca1.json" download>JSON</a></p>
+                <div id="box1" class="chart-container"></div>
+                <div id="scatter1" class="chart-container"></div>
+                <div id="hist1" class="chart-container"></div>
             </div>
             <div class="tab-pane fade" id="tab2" role="tabpanel">
-                <p><a href="VacSol-ML_DataSet_new_original.csv" download>Download CSV</a></p>
-                <div class="table-container">
-                    <table id="table2" class="table table-striped table-bordered" style="width:100%">
-                        <thead><tr><th>Protein_ID</th><th>aa_no</th><th>molecular_weight</th><!-- Auto-detects rest --></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+                <p><a href="VacSol-ML_DataSet_new_original.csv" download>Download CSV</a> | PCA Embed: <a href="pca2.json" download>JSON</a></p>
+                <div id="scatter2" class="chart-container"></div>
+                <div id="box2" class="chart-container"></div>
+                <div id="hist2" class="chart-container"></div>
             </div>
         </div>
     </div>
 
-    <!-- jQuery -->
+    <!-- jQuery & Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>  <!-- Add PapaParse -->
-<script>
-    $(document).ready(function() {
-        // Function to load CSV with PapaParse
-        function loadCSV(tableId, csvFile, columns) {
-            Papa.parse(csvFile, {
-                download: true,
-                header: true,
-                dynamicTyping: true,  // Auto-detect numbers (e.g., lags as floats)
-                complete: function(results) {
-                    if (results.errors.length > 0) {
-                        console.error('CSV Parse Errors:', results.errors);
-                        return;
+    <!-- Plotly JS -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <!-- PapaParse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Load & Viz Function
+            function loadAndViz(csvFile, vizConfig) {
+                Papa.parse(csvFile, {
+                    download: true,
+                    header: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        if (results.errors.length > 0) { console.error('CSV Errors:', results.errors); return; }
+                        const data = results.data;
+                        vizConfig.forEach(config => {
+                            const trace = config.trace(data);
+                            const layout = config.layout || { title: config.title, hovermode: 'closest' };
+                            Plotly.newPlot(config.div, [trace], layout);
+                        });
                     }
-                    var table = $(tableId).DataTable({
-                        data: results.data,  // Parsed JSON-like array
-                        columns: columns,
-                        scrollX: true,
-                        pageLength: 25,
-                        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                        searching: true,
-                        ordering: true,
-                        columnDefs: [{ targets: '_all', className: 'dt-center' }]
-                    });
-                    // Update entry count
-                    var info = table.page.info();
-                    $(tableId).closest('.tab-pane').find('p').prepend('Showing ' + info.recordsTotal + ' entries. ');
+                });
+            }
+
+            // Dataset 1 Viz
+            loadAndViz('VacSol-ML Dataset.csv', [
+                {
+                    div: 'box1',
+                    title: 'Lag Distributions by Organism (First 5 Lags)',
+                    trace: (data) => ({
+                        y: ['CIDH920105.lag1', 'CIDH920105.lag2', 'CIDH920105.lag3', 'CIDH920105.lag4', 'CIDH920105.lag5'].map(col => data.map(row => row[col])),
+                        x: data.map(row => row.Organism),
+                        type: 'box',
+                        orientation: 'h',
+                        hovertemplate: '<b>%{x}</b><br>Lag: %{fullData.name}<br>Value: %{y}<br>Protein: %{text}<extra></extra>',
+                        text: data.map(row => row.Protein_ID)
+                    })
+                },
+                {
+                    div: 'scatter1',
+                    title: 'Antigenicity vs B-Cell Score by Organism',
+                    trace: (data) => ({
+                        x: data.map(row => row.antigenicity_1),
+                        y: data.map(row => row.b_cells_probability_score),
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: { color: data.map(row => row.Organism), size: 8, colorscale: 'Viridis' },
+                        text: data.map(row => row.Protein_ID),
+                        hovertemplate: '<b>%{text}</b><br>Antigenicity: %{x}<br>B-Cell: %{y}<br>Organism: %{marker.color}<extra></extra>'
+                    })
+                },
+                {
+                    div: 'hist1',
+                    title: 'Final Predictions Distribution',
+                    trace: (data) => ({
+                        x: data.map(row => row.Final_predictions),
+                        type: 'histogram',
+                        nbinsx: 2,
+                        hovertemplate: 'Pred: %{x}<br>Count: %{y}<extra></extra>'
+                    })
                 }
-            });
-        }
+            ]);
 
-        // Dataset 1: Lag Features (auto-detects all columns from CSV headers)
-        loadCSV('#table1', 'VacSol-ML Dataset.csv', [
-            { data: 'Protein_ID' },
-            { data: 'Organism' }
-            // PapaParse auto-maps the rest; add more explicit if needed, e.g., { data: 'CIDH920105.lag1' }
-        ]);
-
-        // Dataset 2: Physicochemical & Auto Features
-        loadCSV('#table2', 'VacSol-ML_DataSet_new_original.csv', [
-            { data: 'Protein_ID' },
-            { data: 'aa_no' },
-            { data: 'molecular_weight' },
-            { data: 'pH_charge' },
-            { data: 'isoelectric point' },
-            { data: 'Hydropathy_gravy' }
-            // Auto-maps the rest
-        ]);
-    });
-</script>
+            // Dataset 2 Viz
+            loadAndViz('VacSol-ML_DataSet_new_original.csv', [
+                {
+                    div: 'scatter2',
+                    title: 'Molecular Weight vs Antigenicity (Size: aa_no)',
+                    trace: (data) => ({
+                        x: data.map(row => row.molecular_weight),
+                        y: data.map(row => row.antigenicity_1),
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: { size: data.map(row => row.aa_no / 10), color: 'blue', sizemin: 4 },
+                        text: data.map(row => row.Protein_ID),
+                        hovertemplate: '<b>%{text}</b><br>Weight: %{x}<br>Antigenicity: %{y}<br>aa_no: %{marker.size * 10}<extra></extra>'
+                    })
+                },
+                {
+                    div: 'box2',
+                    title: 'Hydropathy by Instability Bins',
+                    trace: (data) => {
+                        const bins = ['Low (<40)', 'Med (40-60)', 'High (>60)'];
+                        const yData = bins.map(bin => {
+                            const binData = data.filter(row => {
+                                if (bin === 'Low (<40)') return row.instability_index < 40;
+                                if (bin === 'Med (40-60)') return row.instability_index >= 40 && row.instability_index <= 60;
+                                return row.instability_index > 60;
+                            }).map(row => row.Hydropathy_gravy);
+                            return binData;
+                        });
+                        return {
+                            y: yData,
+                            x: bins,
+                            type: 'box',
+                            orientation: 'h',
+                            hovertemplate: '<b>%{x}</b><br>Hydropathy: %{y}<extra></extra>'
+                        };
+                    }
+                },
+                {
+                    div: 'hist2',
+                    title: 'pH Charge Distribution',
+                    trace: (data) => ({
+                        x: data.map(row => row.pH_charge),
+                        type: 'histogram',
+                        nbinsx: 20,
+                        hovertemplate: 'pH: %{x}<br>Count: %{y}<extra></extra>'
+                    })
+                }
+            ]);
+        });
+    </script>
 </body>
 </html>
