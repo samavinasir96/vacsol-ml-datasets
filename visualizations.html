@@ -1,24 +1,26 @@
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
-<div id="classPlot"></div>
+
+<div id="classDist"></div>
 
 <script>
-Papa.parse("train_dataset.csv", {
+Papa.parse("VacSol-ML Dataset.csv", {
   download: true,
   header: true,
   complete: function(results) {
 
-    let labels = {};
-    results.data.forEach(row => {
-      let cls = row.Label;
-      labels[cls] = (labels[cls] || 0) + 1;
+    let counts = {0:0, 1:0};
+
+    results.data.forEach(r => {
+      if (r.Final_predictions !== undefined)
+        counts[r.Final_predictions]++;
     });
 
-    Plotly.newPlot("classPlot", [{
-      values: Object.values(labels),
-      labels: Object.keys(labels),
+    Plotly.newPlot("classDist", [{
+      values: Object.values(counts),
+      labels: ["Non-binder", "Binder"],
       type: "pie"
     }], {
-      title: "Class Distribution"
+      title: "Class Distribution (Final_predictions)"
     });
   }
 });
