@@ -1,0 +1,25 @@
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<div id="classPlot"></div>
+
+<script>
+Papa.parse("train_dataset.csv", {
+  download: true,
+  header: true,
+  complete: function(results) {
+
+    let labels = {};
+    results.data.forEach(row => {
+      let cls = row.Label;
+      labels[cls] = (labels[cls] || 0) + 1;
+    });
+
+    Plotly.newPlot("classPlot", [{
+      values: Object.values(labels),
+      labels: Object.keys(labels),
+      type: "pie"
+    }], {
+      title: "Class Distribution"
+    });
+  }
+});
+</script>
