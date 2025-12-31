@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VacSol-ML Datasets Viewer</title>
+    <!-- Bootstrap CSS for tabs -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .dataTables_wrapper { margin-top: 20px; }
+        .table-container { max-width: 100%; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">VacSol-ML Datasets</h1>
+        <ul class="nav nav-tabs" id="datasetTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button">Dataset 1: Lag Features (362 entries)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button">Dataset 2: Physicochemical & Auto Features (412 entries)</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="datasetTabsContent">
+            <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                <p><a href="VacSol-ML Dataset.csv" download>Download CSV</a></p>
+                <div class="table-container">
+                    <table id="table1" class="table table-striped table-bordered" style="width:100%">
+                        <thead><tr><th>Protein_ID</th><th>Organism</th><!-- Auto-detects rest --></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab2" role="tabpanel">
+                <p><a href="VacSol-ML_DataSet_new_original.csv" download>Download CSV</a></p>
+                <div class="table-container">
+                    <table id="table2" class="table table-striped table-bordered" style="width:100%">
+                        <thead><tr><th>Protein_ID</th><th>aa_no</th><th>molecular_weight</th><!-- Auto-detects rest --></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Dataset 1: Lag Features
+            $('#table1').DataTable({
+                ajax: { url: 'VacSol-ML Dataset.csv', dataSrc: '' },  // Assumes CSV headers match
+                columns: [  // Explicit for first few; auto for rest
+                    { data: 'Protein_ID' }, { data: 'Organism' },
+                    // Add more if needed, e.g., { data: 'CIDH920105.lag1' }
+                    // For auto: DataTables infers from headers
+                ],
+                scrollX: true,  // Horizontal scroll for wide table
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                searching: true,
+                ordering: true,
+                columnDefs: [{ targets: '_all', className: 'dt-center' }]  // Optional: Center align
+            });
+
+            // Dataset 2: Physicochemical & Auto Features
+            $('#table2').DataTable({
+                ajax: { url: 'VacSol-ML_DataSet_new_original.csv', dataSrc: '' },
+                columns: [
+                    { data: 'Protein_ID' }, { data: 'aa_no' }, { data: 'molecular_weight' },
+                    { data: 'pH_charge' }, { data: 'isoelectric point' }, { data: 'Hydropathy_gravy' }
+                    // Auto for rest (e.g., instability_index, GearyAuto_Hydrophobicity1, etc.)
+                ],
+                scrollX: true,
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                searching: true,
+                ordering: true,
+                columnDefs: [{ targets: '_all', className: 'dt-center' }]
+            });
+        });
+    </script>
+</body>
+</html>
