@@ -146,4 +146,71 @@ function loadVisualizations(file) {
 
       data.forEach(row => {
         let score = parseFloat(row.mhci_score);
-        if (!isNaN(s
+        if (!isNaN(score)) {
+          if (row.Final_predictions == 1)
+            mhciScoresBinder.push(score);
+          else
+            mhciScoresNonBinder.push(score);
+        }
+      });
+
+      Plotly.newPlot("mhciPlot", [
+        {
+          y: mhciScoresBinder,
+          type: "box",
+          name: "Binder"
+        },
+        {
+          y: mhciScoresNonBinder,
+          type: "box",
+          name: "Non-binder"
+        }
+      ], {
+        title: "MHCI Score Distribution"
+      });
+
+      /* =========================
+         MHCII SCORE DISTRIBUTION
+      ========================== */
+      let mhciiScoresBinder = [];
+      let mhciiScoresNonBinder = [];
+
+      data.forEach(row => {
+        let score = parseFloat(row.mhcii_score);
+        if (!isNaN(score)) {
+          if (row.Final_predictions == 1)
+            mhciiScoresBinder.push(score);
+          else
+            mhciiScoresNonBinder.push(score);
+        }
+      });
+
+      Plotly.newPlot("mhciiPlot", [
+        {
+          y: mhciiScoresBinder,
+          type: "box",
+          name: "Binder"
+        },
+        {
+          y: mhciiScoresNonBinder,
+          type: "box",
+          name: "Non-binder"
+        }
+      ], {
+        title: "MHCII Score Distribution"
+      });
+    }
+  });
+}
+
+// Load default dataset
+loadVisualizations("VacSol-ML Dataset.csv");
+
+// Handle dataset switching
+document.getElementById("datasetSelect").addEventListener("change", function() {
+  loadVisualizations(this.value);
+});
+</script>
+
+</body>
+</html>
