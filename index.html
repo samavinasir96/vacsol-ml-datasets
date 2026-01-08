@@ -1,245 +1,507 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>VacSol-ML Datasets — Interactive Visualizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VacSol-ML Datasets — Overview & Visualizations</title>
 
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Fonts / Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --muted:#9aa7bf;
-      --accent:#6ee7b7;
-      --glass: rgba(255,255,255,0.03);
-      --radius:12px;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont;
-    }
-    html,body{
-      margin:0;
-      background:linear-gradient(180deg,#071024,#071a2a);
-      color:#e6eef8
-    }
-    .container{
-      display:grid;
-      grid-template-columns:320px 1fr;
-      gap:20px;
-      padding:28px;
-      max-width:1400px;
-      margin:auto
-    }
-    header{
-      grid-column:1/-1;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      background:rgba(255,255,255,0.03);
-      padding:18px;
-      border-radius:12px
-    }
-    h1{font-size:18px;margin:0}
-    .muted{color:var(--muted);font-size:13px}
-    .sidebar{
-      background:var(--card);
-      padding:18px;
-      border-radius:12px;
-      height:calc(100vh - 140px);
-      overflow:auto
-    }
-    .main{
-      background:var(--glass);
-      padding:18px;
-      border-radius:12px
-    }
-    label{font-size:13px;color:var(--muted);margin-top:12px;display:block}
-    select,button{
-      width:100%;
-      padding:10px;
-      margin-top:6px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.05);
-      background:transparent;
-      color:white
-    }
-    button{
-      background:linear-gradient(180deg,#0b6b4f,#0a5f48);
-      color:#04150f;
-      font-weight:600;
-      cursor:pointer
-    }
-    .download a{
-      display:block;
-      text-align:center;
-      margin-top:8px;
-      padding:10px;
-      border-radius:8px;
-      background:#0b6b4f;
-      color:#04150f;
-      text-decoration:none;
-      font-weight:600
-    }
-    .chart-area{height:75vh}
-    .footer{
-      grid-column:1/-1;
-      text-align:center;
-      font-size:13px;
-      color:var(--muted)
-    }
-    @media(max-width:900px){
-      .container{grid-template-columns:1fr}
-      .sidebar{height:auto}
-    }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: #f7fafc; }
+    .hero { padding: 2.25rem 1rem; background: linear-gradient(90deg,#0ea5a4, #3b82f6); color: white; border-radius: .5rem; }
+    .card-compact { padding: .75rem; border-radius:.5rem; background: white; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+    .sidebar-fixed { position: fixed; right: 1.25rem; top: 6rem; width: 220px; z-index: 1030; }
+    .download-btn { width: 100%; margin-bottom: .5rem; }
+    .muted-small { color: #6b7280; font-size: .9rem; }
+    footer { margin-top: 2rem; padding: 1rem 0; color: #6b7280; }
+    .chart-card { min-height: 320px; }
+    .table-preview { max-height: 360px; overflow:auto; }
+    @media (max-width: 980px) { .sidebar-fixed { position: static; width: 100%; margin-top: 1rem; } }
   </style>
 
-  <script src="https://cdn.plot.ly/plotly-2.26.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.28.1.min.js"></script>
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
-
 <body>
-<div class="container">
+  <div class="container py-4">
+    <header class="d-flex align-items-start justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">VacSol-ML — Dataset Explorer</h1>
+        <p class="muted-small mb-0">High-level, non-technical insights for the VacSol-ML datasets. Interactive charts let you explore feature distributions, group-level summaries, and organism composition. Use the download buttons to fetch raw CSVs.</p>
+      </div>
+      <div class="text-end">
+        <a class="btn btn-outline-dark btn-sm" href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank" rel="noopener">View repository on GitHub</a>
+      </div>
+    </header>
 
-<header>
-  <div>
-    <h1>VacSol-ML Dataset Visualizer</h1>
-    <div class="muted">Explore physicochemical and immunogenic features across pathogens</div>
+    <section class="hero mb-4">
+      <div class="row">
+        <div class="col-md-8">
+          <h2 class="h4 mb-1">What you'll see</h2>
+          <p class="mb-0">Summary statistics, grouped visualizations of related features (physicochemical, antigenicity/epitope, sequence), correlation heatmap, and organism distribution. Everything is computed client-side from the CSVs so you always view the latest files in the repo.</p>
+        </div>
+        <div class="col-md-4 text-md-end align-self-center">
+          <small class="d-block muted-small">Last updated: 2026-01-08</small>
+          <a class="btn btn-light btn-sm mt-2" href="#charts">Jump to charts</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="row">
+      <div class="col-lg-9">
+        <!-- Summary cards -->
+        <div class="row g-3 mb-3" id="summary-cards">
+          <div class="col-sm-6 col-md-3">
+            <div class="card-compact text-center">
+              <div class="small text-muted">Proteins</div>
+              <div class="h4" id="stat-count">—</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <div class="card-compact text-center">
+              <div class="small text-muted">Distinct organisms</div>
+              <div class="h4" id="stat-organisms">—</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <div class="card-compact text-center">
+              <div class="small text-muted">Numeric features</div>
+              <div class="h4" id="stat-features">—</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <div class="card-compact text-center">
+              <div class="small text-muted">Rows with missing values</div>
+              <div class="h4" id="stat-missing">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <h3 id="charts" class="h5 mb-2">Visualizations</h3>
+        <p class="muted-small mb-3">Grouped feature visualizations and dataset-level insights. Hover or click on chart elements to explore.</p>
+
+        <div class="row g-3">
+          <div class="col-md-12">
+            <div class="card-compact chart-card" id="boxplots-card">
+              <h5 class="mb-2">Grouped Boxplots — physicochemical & antigenicity features</h5>
+              <div id="grouped-boxplots" style="height:420px;"></div>
+              <small class="muted-small">Boxplots compare distributions for features that belong to the same conceptual group. This helps spot skewed features and outliers quickly.</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card-compact chart-card">
+              <h5 class="mb-2">Radar — Group means (normalized)</h5>
+              <div id="group-radar" style="height:360px;"></div>
+              <small class="muted-small">Each axis is a group of features (averaged then normalized) so you can quickly compare which groups are strong/weak overall.</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card-compact chart-card">
+              <h5 class="mb-2">Organism composition</h5>
+              <div id="organism-pie" style="height:360px;"></div>
+              <small class="muted-small">Top organisms by number of proteins. Click legend items to isolate categories.</small>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="card-compact chart-card">
+              <h5 class="mb-2">Correlation heatmap — selected features</h5>
+              <div id="corr-heatmap" style="height:420px;"></div>
+              <small class="muted-small">A heatmap of Pearson correlations for selected numeric features. Strong positive/negative correlations indicate relationships worth exploring further.</small>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="card-compact">
+              <h5 class="mb-2">Data preview</h5>
+              <div class="table-preview">
+                <table class="table table-sm" id="preview-table">
+                  <thead id="preview-head"></thead>
+                  <tbody id="preview-body"></tbody>
+                </table>
+              </div>
+              <small class="muted-small">First 20 rows shown. Use the download buttons to get the whole CSV files.</small>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar with download and explanations -->
+      <aside class="col-lg-3">
+        <div class="sidebar-fixed">
+          <div class="card-compact mb-3">
+            <h6 class="mb-2">Download datasets</h6>
+            <a class="btn btn-primary download-btn" id="btn-download-main" href="https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML%20Dataset.csv" target="_blank" rel="noopener">
+              Download VacSol-ML Dataset.csv
+            </a>
+            <a class="btn btn-outline-primary download-btn" id="btn-download-original" href="https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML_DataSet_new_original.csv" target="_blank" rel="noopener">
+              Download VacSol-ML_DataSet_new_original.csv
+            </a>
+            <a class="btn btn-light download-btn" href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank">Repository</a>
+
+            <hr>
+            <div>
+              <h6 class="mb-1">How to read this page</h6>
+              <ul class="small">
+                <li><strong>Grouped Boxplots</strong>: see how features inside the same group vary.</li>
+                <li><strong>Radar</strong>: at-a-glance group strength (normalized means).</li>
+                <li><strong>Correlation</strong>: find strong relationships between features.</li>
+                <li><strong>Data preview</strong>: first 20 rows; use download to fetch all.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card-compact">
+            <h6 class="mb-2">Notes for non-technical users</h6>
+            <p class="small muted-small mb-0">If you want a CSV downloaded or a simpler single-chart summary, click the download link and open the file in Excel/Sheets. The charts here help spot which numeric measurements are similar across proteins and which are unusual.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="text-center">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-8 mx-auto">
+            <small>Built with Plotly & PapaParse • To publish: add this file to your repo and enable GitHub Pages (branch: main or docs/). If files are renamed, update the links at the top of this file.</small>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
-  <div class="muted">Plotly • CSV • GitHub Pages</div>
-</header>
 
-<aside class="sidebar">
-  <label>Dataset</label>
-  <select id="datasetSelect">
-    <option value="orig">VacSol-ML Dataset</option>
-    <option value="new">VacSol-ML_DataSet_new_original</option>
-  </select>
+  <script>
+    // Raw CSV URLs from the repository (use raw.githubusercontent.com)
+    const rawMainUrl = "https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML%20Dataset.csv";
+    const rawOriginalUrl = "https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML_DataSet_new_original.csv";
 
-  <label>Feature group</label>
-  <select id="groupSelect" disabled></select>
+    // Features grouping (keys match CSV header names exactly)
+    const physFeatures = [
+      "molecular_weight",
+      "pH_charge",
+      "isoelectric point",
+      "Hydropathy_gravy",
+      "instability_index",
+      "aromaticity"
+    ];
 
-  <label>Organism / Pathogen</label>
-  <select id="organismSelect">
-    <option value="all">All organisms</option>
-  </select>
+    const antigenFeatures = [
+      "antigenicity_1",
+      "b_cells_probability_score",
+      "mhci_probability_score"
+      // If more mhci/mhcii fields exist, they can be added here
+    ];
 
-  <button id="showAggregate">Show aggregate view</button>
+    const seqFeatures = [
+      "aa_no" // sequence length
+    ];
 
-  <div class="download">
-    <a id="downloadOrig" target="_blank">Download time-series CSV</a>
-    <a id="downloadNew" target="_blank">Download features CSV</a>
-  </div>
-
-  <div class="muted" style="margin-top:14px">
-    Select an organism to explore feature distributions across its proteins.
-  </div>
-</aside>
-
-<main class="main">
-  <div class="muted" id="subtitle">Load a dataset to begin</div>
-  <div id="chart" class="chart-area"></div>
-</main>
-
-<div class="footer">
-  VacSol-ML • <a href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank" style="color:var(--accent)">GitHub Repository</a>
-</div>
-
-</div>
-
-<script>
-const RAW = {
-  orig:'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML%20Dataset.csv',
-  new:'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML_DataSet_new_original.csv'
-};
-
-document.getElementById('downloadOrig').href = RAW.orig;
-document.getElementById('downloadNew').href = RAW.new;
-
-let state = {data:[], columns:[], organismCol:null};
-const datasetSelect = document.getElementById('datasetSelect');
-const groupSelect = document.getElementById('groupSelect');
-const organismSelect = document.getElementById('organismSelect');
-const chartDiv = document.getElementById('chart');
-const subtitle = document.getElementById('subtitle');
-
-function detectOrganismColumn(cols){
-  return cols.find(c => /organism|pathogen|species|strain/i.test(c));
-}
-
-function detectGroups(cols){
-  return {
-    "Physicochemical": cols.filter(c=>/molecular|weight|ph|hydropathy|instability|aromaticity/i.test(c)),
-    "Immunogenic / MHC": cols.filter(c=>/mhc|antigen|epitope|rank|prob/i.test(c)),
-    "Time-series (lag)": cols.filter(c=>/lag/i.test(c))
-  };
-}
-
-function loadDataset(key){
-  Papa.parse(RAW[key],{
-    download:true,
-    header:true,
-    dynamicTyping:true,
-    complete: res => {
-      state.data = res.data;
-      state.columns = res.meta.fields;
-      state.organismCol = detectOrganismColumn(state.columns);
-      populateGroups();
-      populateOrganisms();
-      renderAggregate();
+    // Helper: parse CSV and return rows array
+    function fetchCsv(url) {
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          dynamicTyping: false,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results),
+          error: (err) => reject(err)
+        });
+      });
     }
-  });
-}
 
-function populateGroups(){
-  const groups = detectGroups(state.columns);
-  groupSelect.innerHTML='';
-  Object.keys(groups).forEach(g=>{
-    const o=document.createElement('option');
-    o.value=g; o.textContent=g;
-    groupSelect.appendChild(o);
-  });
-  groupSelect.disabled=false;
-}
+    // Numeric conversion tolerant of non-standard strings
+    function toNum(v) {
+      if (v === null || v === undefined) return NaN;
+      // Remove commas, percent signs, extraneous characters
+      const cleaned = String(v).replace(/[,%]/g, "").trim();
+      if (cleaned === "" || cleaned.toLowerCase() === "na" || cleaned.toLowerCase() === "null") return NaN;
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : NaN;
+    }
 
-function populateOrganisms(){
-  organismSelect.innerHTML='<option value="all">All organisms</option>';
-  if(!state.organismCol) return;
-  [...new Set(state.data.map(r=>r[state.organismCol]).filter(Boolean))]
-    .sort()
-    .forEach(o=>{
-      const opt=document.createElement('option');
-      opt.value=o; opt.textContent=o;
-      organismSelect.appendChild(opt);
-    });
-}
+    // Statistics
+    function stats(arr) {
+      const nums = arr.filter(x => Number.isFinite(x)).slice();
+      if (!nums.length) return null;
+      nums.sort((a,b) => a-b);
+      const sum = nums.reduce((s,x) => s+x, 0);
+      const mean = sum / nums.length;
+      const median = (nums.length % 2 === 1) ? nums[(nums.length-1)/2] : (nums[nums.length/2 -1] + nums[nums.length/2]) / 2;
+      const sq = nums.reduce((s,x) => s + (x-mean)*(x-mean), 0);
+      const std = Math.sqrt(sq / nums.length);
+      return {count: nums.length, mean, median, std, min: nums[0], max: nums[nums.length-1]};
+    }
 
-function filteredData(){
-  if(organismSelect.value==='all' || !state.organismCol) return state.data;
-  return state.data.filter(r=>r[state.organismCol]===organismSelect.value);
-}
+    // Compute Pearson correlation matrix for selected features
+    function pearsonMatrix(rows, featureList) {
+      const vectors = featureList.map(f => rows.map(r => toNum(r[f])));
+      const n = vectors[0].length;
+      const corr = [];
+      for (let i=0;i<featureList.length;i++) {
+        corr[i] = [];
+        for (let j=0;j<featureList.length;j++) {
+          const xi = vectors[i];
+          const xj = vectors[j];
+          const pairs = [];
+          for (let k=0;k<n;k++) {
+            const a = xi[k], b = xj[k];
+            if (Number.isFinite(a) && Number.isFinite(b)) pairs.push([a,b]);
+          }
+          if (!pairs.length) { corr[i][j] = 0; continue; }
+          const xs = pairs.map(p=>p[0]), ys = pairs.map(p=>p[1]);
+          const meanX = xs.reduce((s,v)=>s+v,0)/xs.length;
+          const meanY = ys.reduce((s,v)=>s+v,0)/ys.length;
+          let num = 0, sx = 0, sy = 0;
+          for (let p=0;p<pairs.length;p++){
+            num += (xs[p]-meanX)*(ys[p]-meanY);
+            sx += (xs[p]-meanX)*(xs[p]-meanX);
+            sy += (ys[p]-meanY)*(ys[p]-meanY);
+          }
+          const denom = Math.sqrt(sx*sy) || 1;
+          const r = num/denom;
+          corr[i][j] = Math.max(-1, Math.min(1, r));
+        }
+      }
+      return corr;
+    }
 
-function renderAggregate(){
-  const group = groupSelect.value;
-  const cols = detectGroups(state.columns)[group] || [];
-  const traces = cols.map(c=>{
-    const vals = filteredData().map(r=>r[c]).filter(v=>typeof v==='number');
-    return {y:vals,type:'box',name:c,boxmean:true};
-  });
-  subtitle.textContent = organismSelect.value==='all'
-    ? `Aggregate view across all organisms`
-    : `Aggregate view — ${organismSelect.value}`;
-  Plotly.newPlot(chartDiv,traces,{
-    margin:{t:40,l:70,r:20,b:140},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(255,255,255,0.02)',
-    showlegend:false
-  },{responsive:true});
-}
+    // Main
+    (async function main(){
+      try {
+        // Load the more-detailed original CSV (contains feature columns)
+        const original = await fetchCsv(rawOriginalUrl);
+        const rows = original.data;
+        // Basic counts
+        const totalRows = rows.length;
+        // get distinct organisms if present
+        const organisms = new Set(rows.map(r => (r.Organism || r.Organism || r.organism || r.Organism_name || r.organism_name) ).filter(Boolean));
+        // Try common organism column names
+        let organismCol = null;
+        if (rows[0]) {
+          for (const c of Object.keys(rows[0])) {
+            if (c.toLowerCase().includes("organism")) { organismCol = c; break; }
+            if (c.toLowerCase().includes("organism_name")) { organismCol = c; break; }
+          }
+        }
+        // If organism column wasn't found, fallback heuristics
+        if (!organismCol) {
+          // check "Organism" exactly
+          if (rows[0] && rows[0].hasOwnProperty("Organism")) organismCol = "Organism";
+        }
 
-datasetSelect.onchange=()=>loadDataset(datasetSelect.value);
-groupSelect.onchange=renderAggregate;
-organismSelect.onchange=renderAggregate;
-document.getElementById('showAggregate').onclick=renderAggregate;
+        // Count missing values
+        let rowsWithMissing = 0;
+        const numericCols = Object.keys(rows[0] || {}).filter(k => {
+          // consider columns that are likely numeric (contains digits in first non-empty value)
+          const sample = rows.slice(0,20).map(r => r[k]).find(v=>v!==undefined && v!==null && String(v).trim()!=="");
+          if (!sample) return false;
+          // numeric-ish if it contains digits or - or .
+          return /[0-9\.\-]/.test(String(sample));
+        });
 
-loadDataset('orig');
-</script>
+        for (const r of rows) {
+          let anyMissing = false;
+          for (const c of numericCols) {
+            const v = toNum(r[c]);
+            if (!Number.isFinite(v)) { anyMissing = true; break; }
+          }
+          if (anyMissing) rowsWithMissing++;
+        }
+
+        document.getElementById("stat-count").innerText = totalRows;
+        document.getElementById("stat-organisms").innerText = (organismCol ? new Set(rows.map(r => r[organismCol]).filter(Boolean)).size : "N/A");
+        document.getElementById("stat-features").innerText = numericCols.length;
+        document.getElementById("stat-missing").innerText = rowsWithMissing;
+
+        // --- Data preview: first 20 rows ---
+        const previewHead = document.getElementById("preview-head");
+        const previewBody = document.getElementById("preview-body");
+        previewHead.innerHTML = "";
+        previewBody.innerHTML = "";
+
+        const previewRows = rows.slice(0, 20);
+        if (previewRows.length) {
+          const cols = Object.keys(previewRows[0]);
+          const headRow = document.createElement("tr");
+          cols.forEach(c => {
+            const th = document.createElement("th");
+            th.innerText = c;
+            th.style.minWidth = "80px";
+            headRow.appendChild(th);
+          });
+          previewHead.appendChild(headRow);
+
+          previewRows.forEach(r => {
+            const tr = document.createElement("tr");
+            cols.forEach(c => {
+              const td = document.createElement("td");
+              let v = r[c];
+              if (v === undefined || v === null) v = "";
+              td.innerText = String(v).slice(0,80);
+              tr.appendChild(td);
+            });
+            previewBody.appendChild(tr);
+          });
+        }
+
+        // --- Organism composition pie chart ---
+        const organismCounts = {};
+        if (organismCol) {
+          for (const r of rows) {
+            const key = r[organismCol] || "Unknown";
+            organismCounts[key] = (organismCounts[key] || 0) + 1;
+          }
+        } else {
+          // fallback to "Organism" property if present in different case
+          for (const r of rows) {
+            let key = r["Organism"] || r["organism"] || "Unknown";
+            organismCounts[key] = (organismCounts[key] || 0) + 1;
+          }
+        }
+        const organismLabels = Object.keys(organismCounts).sort((a,b)=>organismCounts[b]-organismCounts[a]).slice(0,12);
+        const organismValues = organismLabels.map(l => organismCounts[l]);
+
+        Plotly.newPlot('organism-pie', [{
+          type: 'pie',
+          labels: organismLabels,
+          values: organismValues,
+          textinfo: 'label+percent',
+          marker: { line: { width: 0.5, color: '#fff' } }
+        }], {
+          margin: { t: 10, b: 10, r:10, l:10 },
+          height: 360
+        }, {responsive: true});
+
+        // --- Grouped Boxplots ---
+        // Build boxplots for features present in file (filter by actual presence)
+        function present(list) { return list.filter(f => rows[0] && rows[0].hasOwnProperty(f)); }
+        const phys = present(physFeatures);
+        const antigen = present(antigenFeatures);
+        const seq = present(seqFeatures);
+
+        const traces = [];
+        // helper to push traces for group with offset x positions
+        function addGroupTraces(featureList, groupName, color) {
+          for (const f of featureList) {
+            const vals = rows.map(r => toNum(r[f])).filter(x => Number.isFinite(x));
+            traces.push({
+              y: vals,
+              name: f,
+              type: 'box',
+              boxpoints: 'outliers',
+              marker: { color }
+            });
+          }
+        }
+        addGroupTraces(phys, "Physicochemical", "#4f46e5");
+        addGroupTraces(antigen, "Antigenicity", "#0ea5a4");
+        addGroupTraces(seq, "Sequence", "#f97316");
+
+        if (traces.length === 0) {
+          document.getElementById('grouped-boxplots').innerHTML = "<div class='p-3 muted-small'>No numeric features found for grouped boxplots.</div>";
+        } else {
+          Plotly.newPlot('grouped-boxplots', traces, {
+            margin: { t: 30, b: 80 },
+            showlegend: false,
+            yaxis: { title: 'Value (raw)' },
+            xaxis: { tickangle: -45 }
+          }, {responsive: true});
+        }
+
+        // --- Radar: group means (normalize for comparison) ---
+        function meanOfGroup(featureList) {
+          const values = [];
+          for (const f of featureList) {
+            const arr = rows.map(r => toNum(r[f])).filter(x => Number.isFinite(x));
+            const s = stats(arr);
+            values.push(s ? s.mean : NaN);
+          }
+          // average across features (ignore NaN)
+          const valid = values.filter(Number.isFinite);
+          if (!valid.length) return NaN;
+          return valid.reduce((a,b)=>a+b,0)/valid.length;
+        }
+
+        const groups = [
+          {name: "Physicochemical", features: phys, color: '#4f46e5'},
+          {name: "Antigenicity", features: antigen, color: '#0ea5a4'},
+          {name: "Sequence", features: seq, color: '#f97316'}
+        ];
+
+        // compute group means
+        const groupMeans = groups.map(g => meanOfGroup(g.features));
+        // normalize across groups
+        const meanVals = groupMeans.map(v => Number.isFinite(v) ? v : 0);
+        const maxVal = Math.max(...meanVals.map(v => Math.abs(v)), 1);
+        const norm = meanVals.map(v => v / maxVal);
+
+        const radarTrace = {
+          type: 'scatterpolar',
+          r: norm,
+          theta: groups.map(g => g.name),
+          fill: 'toself',
+          marker: { color: '#2563eb' }
+        };
+
+        Plotly.newPlot('group-radar', [radarTrace], {
+          polar: {
+            radialaxis: { visible: true, range: [-1,1] }
+          },
+          showlegend: false,
+          margin: { t: 10, b: 10 }
+        }, {responsive: true});
+
+        // --- Correlation heatmap for selected numeric features (choose up to 18 to stay readable) ---
+        // We'll attempt to pick most-relevant numeric columns: phys + antigen + first few numericCols
+        let corrFeatures = present([...phys, ...antigen]).slice(0, 18);
+        if (corrFeatures.length < 4) {
+          // fallback: top numericCols (from earlier detection)
+          corrFeatures = numericCols.slice(0, 12);
+        }
+
+        if (corrFeatures && corrFeatures.length >= 2) {
+          const cm = pearsonMatrix(rows, corrFeatures);
+          const traceHeat = {
+            x: corrFeatures,
+            y: corrFeatures,
+            z: cm,
+            type: 'heatmap',
+            colorscale: 'RdBu',
+            zmin: -1,
+            zmax: 1,
+            colorbar: { title: 'r' }
+          };
+          Plotly.newPlot('corr-heatmap', [traceHeat], {
+            margin: { t: 50, b: 100 },
+            yaxis: { automargin: true }
+          }, {responsive: true});
+        } else {
+          document.getElementById('corr-heatmap').innerHTML = "<div class='p-3 muted-small'>Not enough numeric features found for correlation heatmap.</div>";
+        }
+
+      } catch (err) {
+        console.error("Failed to load or process CSVs:", err);
+        const root = document.querySelector('.container');
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger';
+        alert.innerText = "Error loading datasets. Check the CSV URLs or that CORS/raw.githubusercontent links are reachable.";
+        root.prepend(alert);
+      }
+    })();
+  </script>
+
+  <!-- Bootstrap JS (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
