@@ -1,11 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VacSol-ML Datasets — Interactive Visualizer</title>
 
-  <!-- Styles (simple, clean, responsive) -->
   <style>
     :root{
       --bg:#0f1724;
@@ -14,469 +13,233 @@
       --accent:#6ee7b7;
       --glass: rgba(255,255,255,0.03);
       --radius:12px;
-      font-family: Inter, Roboto, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont;
     }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%, #071a2a 100%);color:#e6eef8}
-    .container{display:grid;grid-template-columns:320px 1fr;gap:20px;padding:28px;max-width:1300px;margin:0 auto}
-    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:18px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 6px 30px rgba(3,7,18,0.6)}
-    header h1{margin:0;font-size:18px;letter-spacing:0.2px}
-    header p{margin:0;color:var(--muted);font-size:13px}
-    .sidebar{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(2,6,12,0.6);height:calc(100vh - 140px);overflow:auto}
-    .main{background:var(--glass);padding:18px;border-radius:var(--radius);box-shadow:0 8px 40px rgba(2,6,12,0.5);min-height:70vh}
-    label{display:block;margin-top:12px;margin-bottom:6px;font-size:13px;color:var(--muted)}
-    select,input[type="text"],button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
-    .download-btn{display:flex;gap:8px;margin-top:8px}
-    .download-btn a{flex:1;text-decoration:none;text-align:center;padding:10px;border-radius:8px;background:linear-gradient(180deg,#0b6b4f,#0a5f48);color:#061217;font-weight:600}
-    .meta{margin-top:12px;font-size:13px;color:var(--muted)}
-    .controls{display:flex;gap:10px;margin-top:12px}
-    .controls button{flex:1}
-    .chart-area{height:72vh}
-    .footer{grid-column:1/-1;margin-top:10px;padding:18px;color:var(--muted);font-size:13px;text-align:center}
-    .side-section{margin-top:12px;padding:12px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
-    .small{font-size:12px;color:var(--muted)}
-    .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:12px;color:var(--muted)}
-    .top-row{display:flex;gap:12px;align-items:center}
-    .logo{height:40px;width:40px;border-radius:8px;background:linear-gradient(45deg,#6ee7b7,#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#04201a}
-    .muted{color:var(--muted)}
-    @media (max-width:980px){
-      .container{grid-template-columns:1fr;padding:16px}
+    html,body{
+      margin:0;
+      background:linear-gradient(180deg,#071024,#071a2a);
+      color:#e6eef8
+    }
+    .container{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:20px;
+      padding:28px;
+      max-width:1400px;
+      margin:auto
+    }
+    header{
+      grid-column:1/-1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:rgba(255,255,255,0.03);
+      padding:18px;
+      border-radius:12px
+    }
+    h1{font-size:18px;margin:0}
+    .muted{color:var(--muted);font-size:13px}
+    .sidebar{
+      background:var(--card);
+      padding:18px;
+      border-radius:12px;
+      height:calc(100vh - 140px);
+      overflow:auto
+    }
+    .main{
+      background:var(--glass);
+      padding:18px;
+      border-radius:12px
+    }
+    label{font-size:13px;color:var(--muted);margin-top:12px;display:block}
+    select,button{
+      width:100%;
+      padding:10px;
+      margin-top:6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.05);
+      background:transparent;
+      color:white
+    }
+    button{
+      background:linear-gradient(180deg,#0b6b4f,#0a5f48);
+      color:#04150f;
+      font-weight:600;
+      cursor:pointer
+    }
+    .download a{
+      display:block;
+      text-align:center;
+      margin-top:8px;
+      padding:10px;
+      border-radius:8px;
+      background:#0b6b4f;
+      color:#04150f;
+      text-decoration:none;
+      font-weight:600
+    }
+    .chart-area{height:75vh}
+    .footer{
+      grid-column:1/-1;
+      text-align:center;
+      font-size:13px;
+      color:var(--muted)
+    }
+    @media(max-width:900px){
+      .container{grid-template-columns:1fr}
       .sidebar{height:auto}
     }
   </style>
 
-  <!-- Dependencies: Plotly for plotting, PapaParse for CSV parsing -->
   <script src="https://cdn.plot.ly/plotly-2.26.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="logo">V</div>
-        <div>
-          <h1>VacSol-ML Datasets — Interactive Visualizer</h1>
-          <p class="muted">Explore physicochemical, immunogenic and time-series features from the VacSol-ML collection</p>
-        </div>
-      </div>
-      <div class="small muted">Built with Plotly • CSV-powered • Responsive</div>
-    </header>
+<div class="container">
 
-    <!-- Sidebar -->
-    <aside class="sidebar" aria-label="controls">
-      <div class="side-section">
-        <label for="datasetSelect">Choose dataset</label>
-        <select id="datasetSelect">
-          <option value="orig">VacSol-ML Dataset (time-series & features)</option>
-          <option value="new">VacSol-ML_DataSet_new_original (rich features)</option>
-        </select>
+<header>
+  <div>
+    <h1>VacSol-ML Dataset Visualizer</h1>
+    <div class="muted">Explore physicochemical and immunogenic features across pathogens</div>
+  </div>
+  <div class="muted">Plotly • CSV • GitHub Pages</div>
+</header>
 
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <div style="flex:1">
-            <label for="groupSelect">Feature group</label>
-            <select id="groupSelect" disabled>
-              <option>Loading…</option>
-            </select>
-          </div>
-        </div>
+<aside class="sidebar">
+  <label>Dataset</label>
+  <select id="datasetSelect">
+    <option value="orig">VacSol-ML Dataset</option>
+    <option value="new">VacSol-ML_DataSet_new_original</option>
+  </select>
 
-        <label for="proteinInput">Filter / select Protein ID</label>
-        <input id="proteinInput" type="text" placeholder="Enter Protein_ID (autocomplete available)">
+  <label>Feature group</label>
+  <select id="groupSelect" disabled></select>
 
-        <div class="controls">
-          <button id="showAggregate">Aggregate (box/mean)</button>
-          <button id="showPerProtein">Per-protein view</button>
-        </div>
+  <label>Organism / Pathogen</label>
+  <select id="organismSelect">
+    <option value="all">All organisms</option>
+  </select>
 
-        <div class="meta">
-          <div class="small muted">Datasets (raw)</div>
-          <div class="download-btn">
-            <a id="downloadOrig" href="#" target="_blank" title="Download VacSol-ML Dataset CSV">Download time-series CSV</a>
-          </div>
-          <div class="download-btn">
-            <a id="downloadNew" href="#" target="_blank" title="Download VacSol-ML_DataSet_new_original CSV">Download features CSV</a>
-          </div>
-        </div>
+  <button id="showAggregate">Show aggregate view</button>
 
-        <div class="side-section" style="margin-top:12px">
-          <div class="small muted">Quick tips</div>
-          <ul class="small muted" style="padding-left:18px">
-            <li>Pick a dataset, then a feature group.</li>
-            <li>For lag/time-series: search a Protein_ID and hit Per-protein to see its profile.</li>
-            <li>Aggregate view shows distribution across proteins (boxplots).</li>
-          </ul>
-        </div>
-      </div>
-
-      <div style="margin-top:14px" class="side-section">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="small muted">Detected info</div>
-          <div id="rowsCount" class="badge">rows: -</div>
-        </div>
-        <div id="colsInfo" style="margin-top:8px" class="small muted">columns: -</div>
-      </div>
-
-      <div style="margin-top:12px;text-align:center" class="small muted">Made from your repository: <a href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank" style="color:var(--accent);text-decoration:none">vacsol-ml-datasets</a></div>
-    </aside>
-
-    <!-- Main area -->
-    <main class="main">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h2 id="panelTitle" style="margin:0;font-size:16px">Interactive charts</h2>
-          <div class="small muted" id="panelSubtitle">Select dataset and group to begin</div>
-        </div>
-        <div class="small muted">Tip: hover charts for details • zoom/pan supported</div>
-      </div>
-
-      <div id="chart" class="chart-area"></div>
-
-      <!-- Extra charts area for small multiples -->
-      <div id="extraCharts" style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
-    </main>
-
-    <div class="footer">
-      VacSol-ML Visualizer • Author: samavinasir96 • View dataset on <a href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank" style="color:var(--accent)">GitHub</a>
-    </div>
+  <div class="download">
+    <a id="downloadOrig" target="_blank">Download time-series CSV</a>
+    <a id="downloadNew" target="_blank">Download features CSV</a>
   </div>
 
-<script>
-/*
-  VacSol-ML visualizer (single-page).
-  - Uses PapaParse to stream CSV from raw.githubusercontent.com URLs
-  - Plots with Plotly
-  - Groups features heuristically (time-lag, physicochemical, immunogenic/MHC, others)
-  - Download links point to raw CSVs at given commit
-*/
+  <div class="muted" style="margin-top:14px">
+    Select an organism to explore feature distributions across its proteins.
+  </div>
+</aside>
 
-/* ---------- CONFIG: update the raw URLs if you want different refs ---------- */
+<main class="main">
+  <div class="muted" id="subtitle">Load a dataset to begin</div>
+  <div id="chart" class="chart-area"></div>
+</main>
+
+<div class="footer">
+  VacSol-ML • <a href="https://github.com/samavinasir96/vacsol-ml-datasets" target="_blank" style="color:var(--accent)">GitHub Repository</a>
+</div>
+
+</div>
+
+<script>
 const RAW = {
-  // the commit OID from the data you provided
-  commit: '0b22d317414da667d8224d16f56f36a7216d3a16',
-  orig: 'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/0b22d317414da667d8224d16f56f36a7216d3a16/VacSol-ML%20Dataset.csv',
-  new:  'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/0b22d317414da667d8224d16f56f36a7216d3a16/VacSol-ML_DataSet_new_original.csv'
+  orig:'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML%20Dataset.csv',
+  new:'https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML_DataSet_new_original.csv'
 };
 
 document.getElementById('downloadOrig').href = RAW.orig;
 document.getElementById('downloadNew').href = RAW.new;
 
-let state = { data: null, columns: [], datasetKey: 'orig' };
-
-/* UI elements */
+let state = {data:[], columns:[], organismCol:null};
 const datasetSelect = document.getElementById('datasetSelect');
 const groupSelect = document.getElementById('groupSelect');
-const proteinInput = document.getElementById('proteinInput');
-const showAggregate = document.getElementById('showAggregate');
-const showPerProtein = document.getElementById('showPerProtein');
-const rowsCount = document.getElementById('rowsCount');
-const colsInfo = document.getElementById('colsInfo');
-const panelSubtitle = document.getElementById('panelSubtitle');
+const organismSelect = document.getElementById('organismSelect');
 const chartDiv = document.getElementById('chart');
-const extraCharts = document.getElementById('extraCharts');
-const panelTitle = document.getElementById('panelTitle');
+const subtitle = document.getElementById('subtitle');
 
-/* Helpers for grouping columns by patterns */
-function detectGroups(columns){
-  const groups = {};
-  const lower = (s)=>String(s||'').toLowerCase();
-
-  groups['Time-series (lag)'] = columns.filter(c=>/lag|lag\d+|cidh|^lag/i.test(c));
-  // physicochemical common names
-  const physKeys = ['aa_no','molecular_weight','molecular weight','pH_charge','ph_charge','isoelectric point','isoelectric','hydropathy_gravy','hydropathy','instability_index','instability index','aromaticity','hydropathy_gravy'];
-  groups['Physicochemical'] = columns.filter(c => physKeys.some(k=>lower(c).includes(k)));
-  // immunogenic / MHC / antigenicity
-  groups['Immunogenic / MHC scores'] = columns.filter(c => /mhc|mhci|mhcii|antigen|b_cells|b cells|b_cell|epitope|probability|rank/i.test(c));
-  // sizes/lengths
-  groups['Size / Composition'] = columns.filter(c => /aa_no|length|size|molecular_weight|mw/i.test(c) && !groups['Physicochemical'].includes(c));
-  // remaining numeric columns
-  const assigned = new Set(Object.values(groups).flat());
-  groups['Other numeric'] = columns.filter(c=>{
-    if(assigned.has(c)) return false;
-    // treat numeric-like columns (heuristic) by checking header tokens (we'll render only numeric values)
-    return true;
-  });
-
-  // Drop empty groups and keep order
-  const final = {};
-  ['Time-series (lag)','Physicochemical','Immunogenic / MHC scores','Size / Composition','Other numeric'].forEach(k=>{
-    if(groups[k] && groups[k].length) final[k] = groups[k];
-  });
-  return final;
+function detectOrganismColumn(cols){
+  return cols.find(c => /organism|pathogen|species|strain/i.test(c));
 }
 
-/* Load CSV and set state */
+function detectGroups(cols){
+  return {
+    "Physicochemical": cols.filter(c=>/molecular|weight|ph|hydropathy|instability|aromaticity/i.test(c)),
+    "Immunogenic / MHC": cols.filter(c=>/mhc|antigen|epitope|rank|prob/i.test(c)),
+    "Time-series (lag)": cols.filter(c=>/lag/i.test(c))
+  };
+}
+
 function loadDataset(key){
-  const url = (key === 'orig') ? RAW.orig : RAW.new;
-  panelSubtitle.textContent = 'Loading CSV…';
-  groupSelect.disabled = true;
-  groupSelect.innerHTML = '<option>Loading…</option>';
-  proteinInput.value = '';
-  extraCharts.innerHTML = '';
-  chartDiv.innerHTML = '';
-
-  Papa.parse(url, {
-    download: true,
-    header: true,
-    dynamicTyping: true,
-    skipEmptyLines: true,
-    complete: function(results){
-      const data = results.data;
-      const columns = results.meta.fields || [];
-      state = { data, columns, datasetKey: key };
-      rowsCount.textContent = 'rows: ' + data.length;
-      colsInfo.textContent = 'columns: ' + columns.length;
-      panelSubtitle.textContent = `Dataset loaded — ${data.length} rows • ${columns.length} columns`;
-      panelTitle.textContent = (key === 'orig') ? 'VacSol-ML Dataset (time-series)' : 'VacSol-ML_DataSet_new_original (features)';
+  Papa.parse(RAW[key],{
+    download:true,
+    header:true,
+    dynamicTyping:true,
+    complete: res => {
+      state.data = res.data;
+      state.columns = res.meta.fields;
+      state.organismCol = detectOrganismColumn(state.columns);
       populateGroups();
-      buildProteinAutocomplete();
-      // default view: show aggregate for first group
-      setTimeout(()=> {
-        if(Object.keys(detectedGroups).length) {
-          groupSelect.value = Object.keys(detectedGroups)[0];
-          renderAggregateView();
-        }
-      }, 80);
-    },
-    error: function(err){
-      panelSubtitle.textContent = 'Failed to load CSV: ' + err;
-      chartDiv.innerHTML = '<div style="padding:18px;color:#ffadb0;background:rgba(255,10,30,0.03);border-radius:8px">Failed to fetch the dataset. Check raw URL or CORS.</div>';
+      populateOrganisms();
+      renderAggregate();
     }
   });
 }
 
-/* Build autocomplete for Protein_ID values (simple: use list and filter) */
-function buildProteinAutocomplete(){
-  const data = state.data || [];
-  const ids = new Set();
-  for(const r of data){
-    if(r.Protein_ID) ids.add(String(r.Protein_ID));
-    else if(r.ProteinID) ids.add(String(r.ProteinID));
-    else if(r['Protein ID']) ids.add(String(r['Protein ID']));
-  }
-  const idlist = Array.from(ids).slice(0,3000); // limit
-  proteinInput.addEventListener('input', ()=> {
-    const v = proteinInput.value.trim();
-    if(!v) return;
-    // simple suggestion: if exact exists, do nothing. Could be expanded into dropdown.
-    if(idlist.includes(v)) {
-      proteinInput.dataset.exact = '1';
-    } else {
-      proteinInput.dataset.exact = '';
-    }
-  });
-}
-
-/* Populate group selector (detect groups) */
-let detectedGroups = {};
 function populateGroups(){
-  const columns = state.columns || [];
-  detectedGroups = detectGroups(columns);
-  groupSelect.innerHTML = '';
-  for(const k of Object.keys(detectedGroups)){
-    const opt = document.createElement('option');
-    opt.value = k;
-    opt.textContent = `${k} (${detectedGroups[k].length})`;
-    groupSelect.appendChild(opt);
-  }
-  groupSelect.disabled = false;
-}
-
-/* Utility: pick numeric values from rows for given column */
-function columnValues(col){
-  return state.data.map(r => {
-    const v = r[col];
-    return (typeof v === 'number' && !isNaN(v)) ? v : (v===''||v==null ? null : (isFinite(Number(v)) ? Number(v) : null));
-  }).filter(v=>v!==null);
-}
-
-/* Render aggregate: boxplots for selected group (or mean line for time-series) */
-function renderAggregateView(){
-  const groupName = groupSelect.value;
-  if(!groupName) return;
-  const cols = detectedGroups[groupName] || [];
-  panelSubtitle.textContent = `Aggregate view • ${groupName} • ${cols.length} features`;
-  extraCharts.innerHTML = '';
-  // time-series aggregated => mean and std across proteins per lag index if columns are lag-like
-  if(/lag|time|cidh/i.test(groupName)){
-    // order lag columns by any trailing number for sensible plotting
-    const ordered = cols.slice().sort((a,b)=> {
-      const na = (a.match(/lag(\d+)/i)||[])[1] || (a.match(/\d+/)||[])[0] || 0;
-      const nb = (b.match(/lag(\d+)/i)||[])[1] || (b.match(/\d+/)||[])[0] || 0;
-      return Number(na) - Number(nb);
-    });
-    // compute mean and stdev across proteins per column
-    const means = ordered.map(c=>{
-      const vals = columnValues(c);
-      const mean = vals.reduce((s,x)=>s+x,0) / Math.max(1,vals.length);
-      const sd = Math.sqrt(Math.max(0, vals.reduce((s,x)=>s+(x-mean)*(x-mean),0) / Math.max(1,vals.length)));
-      return {col:c,mean,sd,count:vals.length};
-    });
-    const x = ordered.map((c,i)=> String(i+1));
-    const y = means.map(m=>m.mean);
-    const sd = means.map(m=>m.sd);
-    const traceMean = { x, y, mode:'lines+markers', name:'mean', line:{color:'#60a5fa'}, marker:{size:6} };
-    const traceBand = {
-      x:[...x, ...x.slice().reverse()],
-      y:[...means.map((m,i)=>m.mean + sd[i]), ...means.map((m,i)=>m.mean - sd[i]).reverse()],
-      fill:'toself', fillcolor:'rgba(96,165,250,0.12)', line:{width:0}, hoverinfo:'skip', showlegend:true, name:'±1 sd'
-    };
-    Plotly.newPlot(chartDiv, [traceBand, traceMean], {
-      margin:{t:30,l:60,r:20,b:60},
-      paper_bgcolor:'rgba(0,0,0,0)',
-      plot_bgcolor:'rgba(255,255,255,0.02)',
-      title: {text:`Aggregate time-series — ${groupName}`, font:{color:'#e6eef8'}},
-      yaxis:{title:'value'},
-      xaxis:{title:'lag index'},
-    }, {responsive:true});
-
-    // small multiples: top-6 proteins (by variance) show their lag lines
-    const perProteinVariance = state.data.map(r=>{
-      const vals = ordered.map(c=> (typeof r[c]==='number'? r[c] : (isFinite(Number(r[c]))?Number(r[c]):NaN)) ).filter(x=>!isNaN(x));
-      const mean = vals.length ? vals.reduce((s,x)=>s+x,0)/vals.length : 0;
-      const varr = vals.length ? vals.reduce((s,x)=>s+(x-mean)*(x-mean),0)/vals.length : 0;
-      return {id: r.Protein_ID || r.ProteinID || r['Protein ID'] || '(unknown)', vals, varr};
-    }).sort((a,b)=>b.varr - a.varr).slice(0,6);
-
-    extraCharts.innerHTML = '';
-    for(const p of perProteinVariance){
-      const div = document.createElement('div');
-      div.style.background='rgba(255,255,255,0.01)';
-      div.style.padding='10px';
-      div.style.borderRadius='8px';
-      extraCharts.appendChild(div);
-      const x = ordered.map((c,i)=>String(i+1));
-      const y = ordered.map(c => {
-        const v = state.data.find(r => (r.Protein_ID || r.ProteinID || r['Protein ID']) === p.id);
-        return v ? (typeof v[c]==='number' ? v[c] : (isFinite(Number(v[c]))?Number(v[c]):null)) : null;
-      });
-      const trace = { x, y, mode:'lines+markers', line:{width:2}, marker:{size:4}, hoverinfo:'x+y'};
-      Plotly.newPlot(div, [trace], {margin:{t:20,l:40,r:20,b:40},title:{text:String(p.id),font:{size:12}},height:220,paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(255,255,255,0.01)'}, {responsive:true});
-    }
-    return;
-  }
-
-  // For non-time-series groups: produce boxplots (distribution across proteins) for each feature
-  const numericCols = cols.filter(c=> columnValues(c).length > 0);
-  if(!numericCols.length){
-    chartDiv.innerHTML = '<div class="small muted" style="padding:18px">No numeric features detected in this group to display aggregate statistics.</div>';
-    return;
-  }
-
-  // create box traces
-  const traces = numericCols.map(c=>{
-    return { y: columnValues(c), type:'box', name:c, boxmean:true };
+  const groups = detectGroups(state.columns);
+  groupSelect.innerHTML='';
+  Object.keys(groups).forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g; o.textContent=g;
+    groupSelect.appendChild(o);
   });
-
-  Plotly.newPlot(chartDiv, traces, {
-    margin:{t:40,l:80,r:20,b:150},
-    showlegend:false,
-    title:{text:`Feature distributions — ${groupName}`, font:{color:'#e6eef8'}},
-    yaxis:{title:'value'},
-    xaxis:{tickangle:-45},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(255,255,255,0.02)'
-  }, {responsive:true});
+  groupSelect.disabled=false;
 }
 
-/* Render per-protein: for time-series show line across lag columns; for other groups show bar chart of selected protein values */
-function renderPerProteinView(){
-  const groupName = groupSelect.value;
-  const cols = detectedGroups[groupName] || [];
-  const proteinId = proteinInput.value.trim();
-  if(!proteinId){
-    alert('Please type a Protein_ID into the text box on the left (e.g. AAA26681.1) and try again.');
-    return;
-  }
-  const row = state.data.find(r => String(r.Protein_ID || r.ProteinID || r['Protein ID' ]||'').trim() === proteinId.trim());
-  if(!row){
-    // Try case-insensitive match
-    const row2 = state.data.find(r => String(r.Protein_ID || r.ProteinID || r['Protein ID' ]||'').toLowerCase() === proteinId.toLowerCase());
-    if(row2) {
-      alert('Protein_ID matched case-insensitively. Showing results.');
-      renderPerProteinForRow(row2, groupName, cols);
-      return;
-    }
-    alert('Protein_ID not found in dataset. Try autocomplete or copy a Protein_ID exactly from the dataset.');
-    return;
-  }
-  renderPerProteinForRow(row, groupName, cols);
-}
-
-function renderPerProteinForRow(row, groupName, cols){
-  panelSubtitle.textContent = `Per-protein view • ${groupName} • ${row.Protein_ID || row.ProteinID || row['Protein ID'] || '(unknown)'}`;
-
-  if(/lag|time|cidh/i.test(groupName)){
-    // order cols by trailing number
-    const ordered = cols.slice().sort((a,b)=> {
-      const na = (a.match(/lag(\d+)/i)||[])[1] || (a.match(/\d+/)||[])[0] || 0;
-      const nb = (b.match(/lag(\d+)/i)||[])[1] || (b.match(/\d+/)||[])[0] || 0;
-      return Number(na) - Number(nb);
+function populateOrganisms(){
+  organismSelect.innerHTML='<option value="all">All organisms</option>';
+  if(!state.organismCol) return;
+  [...new Set(state.data.map(r=>r[state.organismCol]).filter(Boolean))]
+    .sort()
+    .forEach(o=>{
+      const opt=document.createElement('option');
+      opt.value=o; opt.textContent=o;
+      organismSelect.appendChild(opt);
     });
-    const x = ordered.map((c,i)=> String(i+1));
-    const y = ordered.map(c => (typeof row[c]==='number'? row[c] : (isFinite(Number(row[c]))? Number(row[c]) : null)));
-    Plotly.newPlot(chartDiv, [{x,y,mode:'lines+markers',line:{color:'#6ee7b7'},marker:{size:6}}], {
-      margin:{t:40,l:60,r:20,b:60},
-      title:{text:`${row.Protein_ID || '(id)'} — time-series (${groupName})`},
-      yaxis:{title:'value'},xaxis:{title:'lag index'},
-      paper_bgcolor:'rgba(0,0,0,0)',
-      plot_bgcolor:'rgba(255,255,255,0.02)'
-    }, {responsive:true});
-    extraCharts.innerHTML = '';
-    return;
-  }
-
-  // non-time-series: show bar with each feature value
-  const numericCols = cols.filter(c=> {
-    const v = row[c];
-    return (typeof v === 'number' && !isNaN(v)) || (isFinite(Number(v)));
-  });
-  if(!numericCols.length){
-    chartDiv.innerHTML = '<div class="small muted" style="padding:18px">No numeric features found for this protein in the chosen group.</div>';
-    return;
-  }
-  const x = numericCols;
-  const y = numericCols.map(c=> Number(row[c]));
-  Plotly.newPlot(chartDiv, [{x,y,type:'bar',marker:{color:'#60a5fa'}}], {
-    margin:{t:40,l:60,r:20,b:120},
-    title:{text:`${row.Protein_ID || '(id)'} — features (${groupName})`},
-    yaxis:{title:'value'},
-    xaxis:{tickangle:-45},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(255,255,255,0.02)'
-  }, {responsive:true});
-
-  // small table summary
-  extraCharts.innerHTML = '';
-  const sumDiv = document.createElement('div');
-  sumDiv.style.background='rgba(255,255,255,0.01)';
-  sumDiv.style.padding='12px';
-  sumDiv.style.borderRadius='8px';
-  sumDiv.innerHTML = `<div style="font-size:13px;color:var(--muted)">Top values (abs) in this group</div>`;
-  const items = numericCols.map(c => ({col:c,val:Math.abs(Number(row[c])||0)})).sort((a,b)=>b.val-a.val).slice(0,8);
-  const list = document.createElement('ul');
-  list.style.paddingLeft='16px'; list.style.marginTop='8px'; list.style.color='var(--muted)';
-  for(const it of items){
-    const li = document.createElement('li');
-    li.textContent = `${it.col}: ${row[it.col]}`;
-    list.appendChild(li);
-  }
-  sumDiv.appendChild(list);
-  extraCharts.appendChild(sumDiv);
 }
 
-/* Event wiring */
-datasetSelect.addEventListener('change', ()=> {
-  loadDataset(datasetSelect.value);
-});
-groupSelect.addEventListener('change', ()=> {
-  // on group change default to aggregate
-  renderAggregateView();
-});
-showAggregate.addEventListener('click', ()=> renderAggregateView());
-showPerProtein.addEventListener('click', ()=> renderPerProteinView());
+function filteredData(){
+  if(organismSelect.value==='all' || !state.organismCol) return state.data;
+  return state.data.filter(r=>r[state.organismCol]===organismSelect.value);
+}
 
-/* Initial load */
+function renderAggregate(){
+  const group = groupSelect.value;
+  const cols = detectGroups(state.columns)[group] || [];
+  const traces = cols.map(c=>{
+    const vals = filteredData().map(r=>r[c]).filter(v=>typeof v==='number');
+    return {y:vals,type:'box',name:c,boxmean:true};
+  });
+  subtitle.textContent = organismSelect.value==='all'
+    ? `Aggregate view across all organisms`
+    : `Aggregate view — ${organismSelect.value}`;
+  Plotly.newPlot(chartDiv,traces,{
+    margin:{t:40,l:70,r:20,b:140},
+    paper_bgcolor:'rgba(0,0,0,0)',
+    plot_bgcolor:'rgba(255,255,255,0.02)',
+    showlegend:false
+  },{responsive:true});
+}
+
+datasetSelect.onchange=()=>loadDataset(datasetSelect.value);
+groupSelect.onchange=renderAggregate;
+organismSelect.onchange=renderAggregate;
+document.getElementById('showAggregate').onclick=renderAggregate;
+
 loadDataset('orig');
-
 </script>
 </body>
 </html>
