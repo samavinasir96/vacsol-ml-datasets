@@ -328,7 +328,7 @@
     charts.organism = new Chart(organismChartCtx, {
       type:'bar',
       data:{labels, datasets:[{label:'Count', data, backgroundColor:labels.map((_,i)=>`hsl(${i*30%360} 70% 55%)`)}]},
-      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}}}
+      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff', maxRotation: 40}},y:{ticks:{color:'#cfe8ff'}}}, datasets: {bar: {barThickness: 18, maxBarThickness: 24, categoryPercentage: 0.7}}}
     });
   }
 
@@ -342,7 +342,7 @@
     charts.groupBar = new Chart(groupBarCtx, {
       type:'bar',
       data:{labels, datasets:[{label:'|mean| (indicator)', data, backgroundColor:'rgba(110,231,183,0.9)'}]},
-      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}},responsive:true,maintainAspectRatio:false}
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}},responsive:true,maintainAspectRatio:false, datasets: {bar: {barThickness: 14, maxBarThickness: 18}}}
     });
   }
 
@@ -371,7 +371,7 @@
     charts.hist = new Chart(histCtx, {
       type:'bar',
       data:{labels, datasets:[{label:feature, data:binsArr, backgroundColor:'rgba(96,165,250,0.9)'}]},
-      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}}}
+      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}}, datasets: { bar: {barPercentage: 0.9, categoryPercentage: 0.9}}}
     });
   }
 
