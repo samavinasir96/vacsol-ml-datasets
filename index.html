@@ -55,6 +55,26 @@
       .sidebar{width:auto;height:auto;position:relative;}
       .grid{grid-template-columns:1fr}
     }
+    /* Chart containers */
+    .chart-box {
+      position: relative;
+      height: 260px;
+      max-height: 260px;
+    }
+
+    .chart-box.small {
+      height: 220px;
+    }
+    
+    .chart-box.large {
+      height: 320px;
+    }
+  
+    /* Force canvas to respect container */
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
   </style>
 
   <!-- Dependencies: PapaParse for CSV parsing, Chart.js for main charts, D3 for heatmap -->
