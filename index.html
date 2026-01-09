@@ -1,264 +1,669 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>VacSol ML Datasets — Explorer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VacSol ML Datasets — Explorer</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Styles: clean modern layout -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa7bf;
+      --accent:#6ee7b7;
+      --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:
+      linear-gradient(180deg,#071227 0%, #08182a 40%), var(--bg); color:#dce9f6;}
+    .wrap{display:flex;min-height:100vh;gap:20px;padding:28px;box-sizing:border-box;}
+    /* Sidebar */
+    .sidebar{width:300px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:20px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 20px rgba(2,6,23,0.6);position:sticky;top:28px;height:calc(100vh - 56px);overflow:auto;}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .logo{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#60a5fa);display:flex;align-items:center;justify-content:center;color:#042028;font-weight:700}
+    h1{font-size:18px;margin:0}
+    p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.03);color:var(--accent);text-decoration:none;font-weight:600;font-size:13px}
+    .btn.secondary{color:#cfe8ff;border-color:rgba(255,255,255,0.04)}
+    .group{margin-top:14px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    select,input[type="search"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:var(--glass-2);color:inherit}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .stat{background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent); padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);min-width:110px}
+    .stat .n{font-size:18px;font-weight:700}
+    .stat .t{font-size:12px;color:var(--muted)}
+    .credit{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.4}
+    /* Main content */
+    .main{flex:1;display:flex;flex-direction:column;gap:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .card h2{margin:0 0 10px;font-size:16px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    .full{grid-column:1/-1}
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:auto;padding:18px;border-radius:12px;color:var(--muted);font-size:13px;text-align:center}
+    a.link{color:var(--accent);text-decoration:none}
+    /* Heatmap legend */
+    .legend{display:flex;gap:6px;align-items:center;margin-top:8px}
+    .legend .swatch{width:18px;height:12px;border-radius:3px}
+    /* Responsive */
+    @media (max-width:980px){
+      .wrap{padding:18px;flex-direction:column}
+      .sidebar{width:auto;height:auto;position:relative;}
+      .grid{grid-template-columns:1fr}
+    }
+    /* Chart containers */
+    .chart-box {
+      position: relative;
+      height: 260px;
+      max-height: 260px;
+    }
 
-<style>
-:root{
-  --bg:#0f1724;
-  --card:#0b1220;
-  --muted:#9aa7bf;
-  --accent:#6ee7b7;
-  --glass:rgba(255,255,255,0.03);
-}
-html,body{
-  margin:0;height:100%;
-  font-family:Inter,system-ui;
-  background:linear-gradient(180deg,#071227,#08182a);
-  color:#dce9f6;
-}
-.wrap{display:flex;gap:20px;padding:24px}
-.sidebar{width:280px;background:var(--card);border-radius:12px;padding:18px;position:sticky;top:24px;height:fit-content}
-.main{flex:1}
-.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
-  border-radius:12px;padding:16px;margin-bottom:16px}
+    .chart-box.small {
+      height: 220px;
+    }
+    
+    .chart-box.large {
+      height: 320px;
+    }
+  
+    /* Force canvas to respect container */
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
 
-h1,h2{margin:0 0 8px}
-h1{font-size:18px}
-h2{font-size:15px}
-
-label{font-size:13px;color:var(--muted)}
-select,input{
-  width:100%;padding:8px;border-radius:8px;
-  background:var(--glass);border:1px solid rgba(255,255,255,0.05);
-  color:#fff;margin-top:6px
-}
-
-.btn{display:inline-block;margin-top:10px;padding:8px 10px;
-  border-radius:8px;background:var(--glass);color:var(--accent);
-  text-decoration:none;font-size:13px}
-
-.chart-box{height:240px;position:relative}
-.chart-box.small{height:200px}
-.chart-box canvas{width:100%!important;height:100%!important}
-
-#heatmap{
-  max-height:420px;
-  overflow:auto;
-  margin-top:10px;
-}
-
-footer{font-size:12px;color:var(--muted);text-align:center}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- Dependencies: PapaParse for CSV parsing, Chart.js for main charts, D3 for heatmap -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-
 <body>
-<div class="wrap">
+  <div class="wrap">
+    <aside class="sidebar card" aria-label="controls">
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <h1>VacSol ML Datasets</h1>
+          <p class="lead">Interactive dataset explorer — summary statistics, group charts and correlations.</p>
+        </div>
+      </div>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <h1>VacSol ML Datasets</h1>
-  <p style="font-size:13px;color:var(--muted)">
-    Fast interactive explorer (optimized)
-  </p>
+      <div class="group">
+        <label for="datasetSelect">Dataset</label>
+        <select id="datasetSelect">
+          <option value="dataset1">VacSol-ML Dataset (time-series features)</option>
+          <option value="dataset2">VacSol-ML_DataSet_new_original (physicochemical + predictions)</option>
+        </select>
+      </div>
 
-  <label>Dataset</label>
-  <select id="datasetSelect">
-    <option value="dataset1">VacSol-ML Dataset</option>
-    <option value="dataset2">VacSol-ML Dataset (Original)</option>
-  </select>
+      <div class="group">
+        <label for="groupSelect">Feature Group</label>
+        <select id="groupSelect">
+          <option value="auto">Auto-detected groups</option>
+          <option value="physicochemical">Physicochemical</option>
+          <option value="immunogenicity">Immunogenicity / prediction scores</option>
+          <option value="timeseries">Time-series / lag features</option>
+          <option value="all">All numeric features</option>
+        </select>
+      </div>
 
-  <label style="margin-top:12px">Feature Group</label>
-  <select id="groupSelect">
-    <option value="auto">Auto</option>
-    <option value="physicochemical">Physicochemical</option>
-    <option value="immunogenicity">Immunogenicity</option>
-    <option value="timeseries">Time-series</option>
-    <option value="all">All numeric</option>
-  </select>
+      <div class="group">
+        <label for="featureSearch">Quick find feature</label>
+        <input id="featureSearch" type="search" placeholder="search column name" />
+      </div>
 
-  <a id="downloadBtn" class="btn" target="_blank">Download CSV</a>
-</aside>
+      <div class="group">
+        <div style="display:flex;gap:8px;">
+          <a id="downloadBtn" class="btn" target="_blank" rel="noopener">Download CSV</a>
+          <a id="viewGitBtn" class="btn secondary" target="_blank" rel="noopener">View on GitHub</a>
+        </div>
+      </div>
 
-<!-- MAIN -->
-<main class="main">
+      <div class="group">
+        <label>Dataset snapshot</label>
+        <div class="meta" id="metaStats">
+          <div class="stat"><div class="n" id="rows">—</div><div class="t">rows</div></div>
+          <div class="stat"><div class="n" id="cols">—</div><div class="t">columns</div></div>
+          <div class="stat"><div class="n" id="numcols">—</div><div class="t">numeric cols</div></div>
+        </div>
+      </div>
 
-<div class="card">
-  <h2>Organism Distribution</h2>
-  <div class="chart-box small">
-    <canvas id="organismChart"></canvas>
+      <div class="credit">
+        Built for <strong>samavinasir96</strong>. Charts work offline in browser. Source data loaded from this repo.
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h2>Dataset overview</h2>
+            <p class="small">Summary counts and top-level insights. Pick dataset and feature groups on the left.</p>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="small">Organism filter:</div>
+            <select id="organismFilter"><option value="__ALL__">All organisms</option></select>
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:14px">
+          <div class="card" style="min-height:160px">
+            <h2>Organism counts</h2>
+            <canvas id="organismChart" style="height:220px"></canvas>
+          </div>
+
+          <div class="card">
+            <h2>Top features in selected group</h2>
+            <div class="controls">
+              <div class="small">Showing features with highest variance</div>
+              <div style="flex:1"></div>
+              <div class="small">Features:</div>
+              <select id="topN"><option>5</option><option selected>10</option><option>15</option><option>25</option></select>
+            </div>
+            <canvas id="groupBar" style="height:220px"></canvas>
+          </div>
+
+          <div class="card full">
+            <h2>Feature distribution (pick a feature)</h2>
+            <div class="controls">
+              <select id="featureSelect"></select>
+              <div style="flex:1"></div>
+              <div class="small">Bins</div>
+              <select id="bins"><option>12</option><option selected>20</option><option>30</option><option>50</option></select>
+            </div>
+            <canvas id="histChart" style="height:160px"></canvas>
+          </div>
+
+          <div class="card full">
+            <h2>Correlation heatmap (selected group)</h2>
+            <div class="small">Pearson correlation between numeric features in the chosen group. Hover for values.</div>
+            <div id="heatmap" style="margin-top:12px;"></div>
+            <div class="legend" id="corrLegend"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="card">
+        Built with ❤️ — VacSol ML Dataset Explorer. Data: <a class="link" href="https://github.com/samavinasir96/vacsol-ml-datasets">vacsol-ml-datasets</a>. Page created for dataset exploration and public sharing.
+      </footer>
+    </main>
   </div>
-</div>
 
-<div class="card">
-  <h2>Top Features (Variance)</h2>
-  <div class="chart-box">
-    <canvas id="groupBar"></canvas>
-  </div>
-</div>
+  <script>
+  // Raw file URLs using provided commit OID:
+  const COMMIT = "0b22d317414da667d8224d16f56f36a7216d3a16";
+  const RAW_BASE = "https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/" + COMMIT + "/";
+  const BLOB_BASE = "https://github.com/samavinasir96/vacsol-ml-datasets/blob/main/";
+  const FILES = {
+    dataset1: {name: "VacSol-ML Dataset.csv", raw: RAW_BASE + "VacSol-ML%20Dataset.csv", blob: BLOB_BASE + "VacSol-ML%20Dataset.csv"},
+    dataset2: {name: "VacSol-ML_DataSet_new_original.csv", raw: RAW_BASE + "VacSol-ML_DataSet_new_original.csv", blob: BLOB_BASE + "VacSol-ML_DataSet_new_original.csv"}
+  };
 
-<div class="card">
-  <h2>Feature Distribution</h2>
-  <select id="featureSelect"></select>
-  <div class="chart-box small">
-    <canvas id="histChart"></canvas>
-  </div>
-</div>
+  // UI elements
+  const datasetSelect = document.getElementById("datasetSelect");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const viewGitBtn = document.getElementById("viewGitBtn");
+  const metaRows = document.getElementById("rows");
+  const metaCols = document.getElementById("cols");
+  const metaNumCols = document.getElementById("numcols");
+  const organismFilter = document.getElementById("organismFilter");
+  const organismChartCtx = document.getElementById("organismChart").getContext('2d');
+  const groupSelect = document.getElementById("groupSelect");
+  const featureSelect = document.getElementById("featureSelect");
+  const featureSearch = document.getElementById("featureSearch");
+  const binsSelect = document.getElementById("bins");
+  const groupBarCtx = document.getElementById("groupBar").getContext('2d');
+  const histCtx = document.getElementById("histChart").getContext('2d');
+  const topNSelect = document.getElementById("topN");
+  const heatmapContainer = document.getElementById("heatmap");
+  const corrLegend = document.getElementById("corrLegend");
 
-<div class="card">
-  <h2>Correlation Heatmap (Top 12)</h2>
-  <div id="heatmap"></div>
-</div>
+  // State
+  let rawData = {dataset1: null, dataset2: null}; // arrays of row objects
+  let current = 'dataset1';
+  let numericColumns = []; // computed for current dataset
+  let colTypes = {}; // column -> {numeric:bool}
+  let charts = {}; // store Chart.js instances
 
-<footer class="card">
-  Built for VacSol-ML · Optimized for GitHub Pages
-</footer>
+  // Utility: detect numeric columns
+  function detectNumericColumns(rows){
+    if(!rows || rows.length===0) return [];
+    const sample = rows.slice(0,Math.min(rows.length,200));
+    const cols = Object.keys(rows[0]);
+    const numeric = [];
+    const types = {};
+    for(const c of cols){
+      let okCount=0, total=0;
+      for(const r of sample){
+        const v = r[c];
+        if(v===undefined || v===null || v==='') { total++; continue; }
+        const n = parseFloat(String(v).replace(/[, ]+/g,'')); // remove stray commas/spaces
+        if(!Number.isNaN(n) && isFinite(n)) okCount++;
+        total++;
+      }
+      const isNum = total>0 && okCount/total > 0.5; // more than half parse as numbers
+      if(isNum) numeric.push(c);
+      types[c] = {numeric:isNum};
+    }
+    return {numeric, types};
+  }
 
-</main>
-</div>
+  // Grouping rules (regex-based). Returns object {groupName: [cols...]}
+  function groupColumns(cols){
+    const groups = {physicochemical:[], immunogenicity:[], timeseries:[], other:[]};
+    const physRe = /(molecular|weight|aa_no|isoelectric|hydropathy|instability|aromaticity|pH_charge|aa no|mwt|m_wt)/i;
+    const immunoRe = /(antigen|b[_ ]?cells|mhc|mhci|mhcii|probability|rank|epitop|antigenicity|b_cells|mhc)/i;
+    const timeRe = /(lag|CIDH|CIDH920105|^CID|lag\d+|^lag|time|window)/i;
 
-<script>
-/* ---------------- CONFIG ---------------- */
-const MAX_HEATMAP = 12;
-const FILES = {
-  dataset1:"https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML%20Dataset.csv",
-  dataset2:"https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/main/VacSol-ML_DataSet_new_original.csv"
-};
+    cols.forEach(c=>{
+      if(timeRe.test(c)) groups.timeseries.push(c);
+      else if(physRe.test(c)) groups.physicochemical.push(c);
+      else if(immunoRe.test(c)) groups.immunogenicity.push(c);
+      else groups.other.push(c);
+    });
+    return groups;
+  }
 
-/* ---------------- STATE ---------------- */
-const rawData = {};
-const cache = {numeric:{},stats:{}};
-let charts = {};
-let currentDataset = "dataset1";
+  // Compute mean and variance for numeric columns; returns array of {col,mean,std}
+  function summarizeColumns(rows, cols){
+    const stats = [];
+    cols.forEach(c=>{
+      const vals = rows.map(r => {
+        const v = r[c];
+        const n = parseFloat(String(v).replace(/[, ]+/g,''));
+        return Number.isFinite(n)? n: null;
+      }).filter(v=>v!==null && !Number.isNaN(v));
+      if(vals.length<2) return;
+      const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+      const variance = vals.reduce((a,b)=>a + Math.pow(b-mean,2),0)/(vals.length-1);
+      stats.push({col:c, mean, std: Math.sqrt(variance), count: vals.length});
+    });
+    return stats;
+  }
 
-/* ---------------- UTIL ---------------- */
-function parseNum(v){
-  const n = parseFloat(String(v||"").replace(/[, ]+/g,''));
-  return Number.isFinite(n)?n:null;
-}
+  // Pearson correlation between two arrays
+  function pearson(a,b){
+    if(a.length !== b.length || a.length < 2) return 0;
+    const n = a.length;
+    const meanA = a.reduce((s,x)=>s+x,0)/n;
+    const meanB = b.reduce((s,x)=>s+x,0)/n;
+    let num=0, denA=0, denB=0;
+    for(let i=0;i<n;i++){
+      const da = a[i]-meanA, db = b[i]-meanB;
+      num += da*db;
+      denA += da*da; denB += db*db;
+    }
+    const denom = Math.sqrt(denA*denB);
+    if(denom===0) return 0;
+    return num/denom;
+  }
 
-/* ---------------- LOAD CSV (LAZY) ---------------- */
-function loadDataset(key){
-  if(rawData[key]) return Promise.resolve(rawData[key]);
+  // Build organism counts
+  function buildOrganismCounts(rows){
+    const colCandidates = ["Organism","organism","Organisms"];
+    let orgCol = colCandidates.find(c=>rows[0] && Object.prototype.hasOwnProperty.call(rows[0],c));
+    if(!orgCol){
+      // try first non-numeric column other than Protein_ID
+      const first = Object.keys(rows[0]).find(k=>k!=="Protein_ID" && !colTypes[k].numeric);
+      orgCol = first || Object.keys(rows[0])[0];
+    }
+    const counts = {};
+    rows.forEach(r => {
+      const o = (r[orgCol] || "unknown").toString().trim();
+      counts[o] = (counts[o]||0)+1;
+    });
+    return {counts, orgCol};
+  }
 
-  return new Promise(res=>{
-    Papa.parse(FILES[key],{
-      download:true,
-      header:true,
-      skipEmptyLines:true,
-      complete:r=>{
-        rawData[key]=r.data;
-        res(r.data);
+  // Render organism bar chart
+  function renderOrganismChart(counts){
+    const labels = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+    const data = labels.map(l=>counts[l]);
+    if(charts.organism) charts.organism.destroy();
+    charts.organism = new Chart(organismChartCtx, {
+      type:'bar',
+      data:{labels, datasets:[{label:'Count', data, backgroundColor:labels.map((_,i)=>`hsl(${i*30%360} 70% 55%)`)}]},
+      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff', maxRotation: 40}},y:{ticks:{color:'#cfe8ff'}}}, datasets: {bar: {barThickness: 18, maxBarThickness: 24, categoryPercentage: 0.7}}}
+    });
+  }
+
+  // Render summary bar for top features by std
+  function renderGroupBar(stats){
+    const topN = parseInt(topNSelect.value)||10;
+    const sorted = stats.sort((a,b)=>b.std - a.std).slice(0,topN);
+    const labels = sorted.map(s=>s.col);
+    const data = sorted.map(s=>Math.abs(s.mean)); // show absolute mean magnitude for visual priority
+    if(charts.groupBar) charts.groupBar.destroy();
+    charts.groupBar = new Chart(groupBarCtx, {
+      type:'bar',
+      data:{labels, datasets:[{label:'|mean| (indicator)', data, backgroundColor:'rgba(110,231,183,0.9)'}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}},responsive:true,maintainAspectRatio:false, datasets: {bar: {barThickness: 14, maxBarThickness: 18}}}
+    });
+  }
+
+  // Render histogram for selected feature
+  function renderHistogram(rows, feature, bins=20){
+    const vals = rows.map(r=> {
+      const n = parseFloat(String(r[feature]||'').replace(/[, ]+/g,''));
+      return Number.isFinite(n)? n: null;
+    }).filter(v=>v!==null);
+    if(vals.length===0){
+      if(charts.hist) charts.hist.destroy();
+      return;
+    }
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max - min || 1;
+    const binCount = bins;
+    const binSize = range / binCount;
+    const binsArr = new Array(binCount).fill(0);
+    for(const v of vals){
+      let idx = Math.floor((v - min)/binSize);
+      if(idx<0) idx=0; if(idx>=binCount) idx=binCount-1;
+      binsArr[idx]++;
+    }
+    const labels = binsArr.map((_,i)=> (min + i*binSize).toFixed(3) + (i===binCount-1 ? ` – ${max.toFixed(3)}` : ''));
+    if(charts.hist) charts.hist.destroy();
+    charts.hist = new Chart(histCtx, {
+      type:'bar',
+      data:{labels, datasets:[{label:feature, data:binsArr, backgroundColor:'rgba(96,165,250,0.9)'}]},
+      options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#cfe8ff'}},y:{ticks:{color:'#cfe8ff'}}}, datasets: { bar: {barPercentage: 0.9, categoryPercentage: 0.9}}}
+    });
+  }
+
+  // Render correlation heatmap using d3
+  function renderHeatmap(rows, cols){
+    heatmapContainer.innerHTML = '';
+    corrLegend.innerHTML = '';
+
+    // prepare numeric arrays aligned and filter rows with all-numeric
+    const colVals = {};
+    cols.forEach(c=>{
+      colVals[c] = rows.map(r=>{
+        const n = parseFloat(String(r[c]||'').replace(/[, ]+/g,''));
+        return Number.isFinite(n)? n: null;
+      });
+    });
+    // Keep only rows where at least two columns are numeric? For simplicity, we'll compute using available pairs by pairwise dropping nulls
+    const matrix = [];
+    for(let i=0;i<cols.length;i++){
+      const row = [];
+      for(let j=0;j<cols.length;j++){
+        const a = colVals[cols[i]];
+        const b = colVals[cols[j]];
+        // build paired arrays where both not null
+        const pairedA = [], pairedB = [];
+        for(let k=0;k<a.length;k++){
+          if(a[k]!==null && b[k]!==null){ pairedA.push(a[k]); pairedB.push(b[k]); }
+        }
+        const corr = pairedA.length>1 ? pearson(pairedA, pairedB) : 0;
+        row.push(Number.isFinite(corr) ? corr : 0);
+      }
+      matrix.push(row);
+    }
+
+    // Visual parameters
+    const size = Math.min(720, Math.max(320, cols.length*24));
+    const cellSize = Math.max(18, Math.floor(size / cols.length));
+    const width = cellSize * cols.length + 140;
+    const height = cellSize * cols.length + 140;
+
+    const svg = d3.select(heatmapContainer).append('svg').attr('width', width).attr('height', height)
+      .style('background','transparent');
+
+    // color scale
+    const color = d3.scaleLinear().domain([-1,0,1]).range(['#002b36','#0b3a59','#2a7f6e']);
+
+    // headings
+    const g = svg.append('g').attr('transform', 'translate(120,100)');
+
+    // row labels
+    const yLabels = g.selectAll('.yLabel').data(cols).enter().append('text')
+      .text(d=>d).attr('x', -6).attr('y', (_,i)=> i*cellSize + cellSize/1.5)
+      .attr('text-anchor','end').attr('fill','#cfe8ff').style('font-size','11px');
+
+    // col labels
+    const xLabels = g.selectAll('.xLabel').data(cols).enter().append('text')
+      .text(d=>d).attr('x', (_,i)=> i*cellSize + cellSize/2).attr('y', -8)
+      .attr('text-anchor','middle').attr('fill','#cfe8ff').style('font-size','11px');
+
+    // cells
+    const rowsSel = g.selectAll('.row').data(matrix).enter().append('g').attr('transform', (_,i)=>`translate(0,${i*cellSize})`);
+    rowsSel.selectAll('rect').data(d=>d).enter().append('rect')
+      .attr('x', (_,i)=> i*cellSize).attr('width', cellSize-1).attr('height', cellSize-1)
+      .attr('fill', d=>color(d))
+      .on('mousemove', function(event,d){
+        const [mx,my] = d3.pointer(event);
+        const cell = d3.select(this);
+        const i = Math.floor(d3.select(this).attr('y')/cellSize);
+        const j = Math.floor(d3.select(this).attr('x')/cellSize);
+        d3.selectAll('rect').attr('stroke', null);
+        cell.attr('stroke','#fff').attr('stroke-width',1);
+        // Tooltip
+        const tooltipText = `r = ${d3.format(".3f")(d)}`;
+        showTooltip(event.pageX,event.pageY,tooltipText);
+      })
+      .on('mouseleave', hideTooltip);
+
+    // legend gradient
+    const legSvg = d3.select(corrLegend).append('svg').attr('width',240).attr('height',36);
+    const defs = legSvg.append('defs');
+    const grad = defs.append('linearGradient').attr('id','gradCorr').attr('x1','0%').attr('x2','100%');
+    grad.append('stop').attr('offset','0%').attr('stop-color','#002b36');
+    grad.append('stop').attr('offset','50%').attr('stop-color','#0b3a59');
+    grad.append('stop').attr('offset','100%').attr('stop-color','#2a7f6e');
+    legSvg.append('rect').attr('x',0).attr('y',6).attr('width',200).attr('height',12).attr('fill','url(#gradCorr)').attr('rx',4);
+    legSvg.append('text').attr('x',0).attr('y',28).attr('fill','#cfe8ff').style('font-size','12px').text('-1');
+    legSvg.append('text').attr('x',200).attr('y',28).attr('fill','#cfe8ff').style('font-size','12px').text('1');
+
+    // utility: tooltip
+    const tip = d3.select('body').append('div').attr('class','heatmap-tooltip').style('position','absolute').style('pointer-events','none')
+      .style('padding','8px').style('background','#072033').style('border','1px solid rgba(255,255,255,0.04)').style('color','#cfe8ff')
+      .style('border-radius','6px').style('font-size','12px').style('display','none');
+
+    function showTooltip(x,y,t){
+      tip.style('left', (x+10)+'px').style('top',(y+6)+'px').style('display','block').html(t);
+    }
+    function hideTooltip(){ tip.style('display','none'); d3.selectAll('rect').attr('stroke',null); }
+
+    // Expose hide/show helpers to outer scope
+    window.showTooltip = showTooltip;
+    window.hideTooltip = hideTooltip;
+  }
+
+  // Populate feature select and feature search behavior
+  function updateFeatureLists(numericCols){
+    featureSelect.innerHTML='';
+    numericCols.forEach(c=>{
+      const o = document.createElement('option'); o.value=c; o.textContent=c; featureSelect.appendChild(o);
+    });
+    // search filter
+    featureSearch.oninput = function(){
+      const q = this.value.toLowerCase();
+      featureSelect.innerHTML='';
+      numericCols.filter(c=>c.toLowerCase().includes(q)).forEach(c=>{
+        const o = document.createElement('option'); o.value=c; o.textContent=c; featureSelect.appendChild(o);
+      });
+      // if any, choose first
+      if(featureSelect.options.length>0) featureSelect.selectedIndex=0;
+      renderHistogram(rawData[current], featureSelect.value, parseInt(binsSelect.value));
+    };
+  }
+
+  // Update dataset UI and render everything
+  function updateForDataset(key){
+    current = key;
+    // update download link
+    downloadBtn.href = FILES[key].raw;
+    downloadBtn.textContent = 'Download ' + FILES[key].name;
+    viewGitBtn.href = FILES[key].blob;
+    viewGitBtn.textContent = 'Open ' + FILES[key].name + ' on GitHub';
+
+    const rows = rawData[key];
+    if(!rows) return;
+    // meta
+    metaRows.textContent = rows.length;
+    const cols = Object.keys(rows[0]||{});
+    metaCols.textContent = cols.length;
+
+    // detect numeric columns
+    const detected = detectNumericColumns(rows);
+    numericColumns = detected.numeric.filter(c=>c!=="Protein_ID"); // remove id
+    colTypes = detected.types || {};
+    metaNumCols.textContent = numericColumns.length;
+
+    // groups
+    const grouped = groupColumns(numericColumns);
+    // update groupSelect 'auto' logic label into select options if needed
+    // Fill organism filter
+    const orgRes = buildOrganismCounts(rows);
+    const organismCounts = orgRes.counts;
+    organismFilter.innerHTML = '<option value="__ALL__">All organisms</option>';
+    Object.keys(organismCounts).sort((a,b)=>organismCounts[b]-organismCounts[a]).forEach(o=>{
+      const opt = document.createElement('option'); opt.value=o; opt.textContent = `${o} (${organismCounts[o]})`; organismFilter.appendChild(opt);
+    });
+
+    renderOrganismChart(organismCounts);
+
+    // choose group by selection
+    let chosenGroup = getChosenGroup(grouped);
+    // if group is empty, fallback to 'all numeric'
+    if(!chosenGroup || chosenGroup.length===0) chosenGroup = numericColumns.slice(0, Math.min(30,numericColumns.length));
+
+    // update feature select
+    updateFeatureLists(chosenGroup.length ? chosenGroup : numericColumns);
+
+    // compute stats
+    const stats = summarizeColumns(rows, chosenGroup);
+    renderGroupBar(stats);
+
+    // render histogram for first feature
+    if(featureSelect.options.length>0) renderHistogram(rows, featureSelect.value, parseInt(binsSelect.value));
+
+    // render correlation heatmap (top N features by variance to keep heatmap readable)
+    const topN = Math.min(30, Math.max(6, parseInt(topNSelect.value) || 10));
+    const colsByVar = stats.sort((a,b)=>b.std - a.std).slice(0,topN).map(s=>s.col);
+    renderHeatmap(rows, colsByVar);
+  }
+
+  function getChosenGroup(grouped){
+    const sel = groupSelect.value;
+    if(sel==='auto') {
+      // auto: prefer physicochemical if present, else immunogenicity, else timeseries, else other
+      if(grouped.physicochemical.length) return grouped.physicochemical;
+      if(grouped.immunogenicity.length) return grouped.immunogenicity;
+      if(grouped.timeseries.length) return grouped.timeseries;
+      return grouped.other;
+    } else if(sel==='physicochemical') return grouped.physicochemical;
+    else if(sel==='immunogenicity') return grouped.immunogenicity;
+    else if(sel==='timeseries') return grouped.timeseries;
+    else if(sel==='all') return numericColumns;
+    return numericColumns;
+  }
+
+  // Load CSV with PapaParse (returns rows)
+  function loadCSV(key, cb){
+    Papa.parse(FILES[key].raw, {
+      download: true,
+      header: true,
+      dynamicTyping: false,
+      skipEmptyLines: true,
+      complete: function(results){
+        // Clean BOM from first header (if any)
+        // Papa already parses headers; but sometimes first header has BOM char.
+        if(results.meta && results.meta.fields){
+          results.meta.fields = results.meta.fields.map(f=>f.replace(/^\uFEFF/,''));
+        }
+        cb(results.data);
+      },
+      error: function(err){
+        console.error('CSV load error', err);
+        cb(null);
       }
     });
-  });
-}
+  }
 
-/* ---------------- NUMERIC DETECT (CACHED) ---------------- */
-function numericCols(key,rows){
-  if(cache.numeric[key]) return cache.numeric[key];
-  const cols=Object.keys(rows[0]);
-  const nums=cols.filter(c=>rows.slice(0,50).filter(r=>parseNum(r[c])!==null).length>25);
-  cache.numeric[key]=nums;
-  return nums;
-}
+  // Initialize: load both datasets in parallel
+  Promise.all([new Promise(res=>loadCSV('dataset1', r=>res(r))), new Promise(res=>loadCSV('dataset2', r=>res(r)))])
+  .then(([d1,d2])=>{
+    rawData.dataset1 = d1 || [];
+    rawData.dataset2 = d2 || [];
 
-/* ---------------- STATS (CACHED) ---------------- */
-function statsFor(key,rows,cols){
-  const sig=key+cols.join("|");
-  if(cache.stats[sig]) return cache.stats[sig];
-  const s=cols.map(c=>{
-    const v=rows.map(r=>parseNum(r[c])).filter(x=>x!==null);
-    if(v.length<2) return null;
-    const m=v.reduce((a,b)=>a+b,0)/v.length;
-    const sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/(v.length-1));
-    return {c,sd};
-  }).filter(Boolean);
-  cache.stats[sig]=s;
-  return s;
-}
-
-/* ---------------- CHARTS ---------------- */
-function barChart(ctx,labels,data){
-  if(charts[ctx]) charts[ctx].destroy();
-  charts[ctx]=new Chart(document.getElementById(ctx),{
-    type:"bar",
-    data:{labels,datasets:[{data,backgroundColor:"#6ee7b7"}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
-  });
-}
-
-/* ---------------- HEATMAP (LAZY) ---------------- */
-let heatmapRendered=false;
-function renderHeatmap(rows,cols){
-  if(heatmapRendered) return;
-  heatmapRendered=true;
-  cols=cols.slice(0,MAX_HEATMAP);
-
-  const data=cols.map(a=>cols.map(b=>{
-    const x=[],y=[];
-    rows.forEach(r=>{
-      const va=parseNum(r[a]), vb=parseNum(r[b]);
-      if(va!==null&&vb!==null){x.push(va);y.push(vb);}
+    // ensure column keys don't include stray BOM on repeated fields
+    ['dataset1','dataset2'].forEach(k=>{
+      if(!rawData[k]) rawData[k]=[];
+      // trim object keys
+      rawData[k] = rawData[k].map(row=>{
+        const out={};
+        Object.keys(row).forEach(k2=>out[k2.replace(/^\uFEFF/,'').trim()] = row[k2]);
+        return out;
+      });
     });
-    if(x.length<2) return 0;
-    const ma=x.reduce((s,v)=>s+v,0)/x.length;
-    const mb=y.reduce((s,v)=>s+v,0)/y.length;
-    let num=0,da=0,db=0;
-    for(let i=0;i<x.length;i++){
-      num+=(x[i]-ma)*(y[i]-mb);
-      da+=(x[i]-ma)**2; db+=(y[i]-mb)**2;
-    }
-    return num/Math.sqrt(da*db||1);
-  }));
 
-  const size=cols.length*18;
-  const svg=d3.select("#heatmap").append("svg")
-    .attr("width",size+120).attr("height",size+120);
+    // initial UI
+    updateForDataset(current);
+  });
 
-  const g=svg.append("g").attr("transform","translate(100,20)");
-  const color=d3.scaleLinear().domain([-1,0,1]).range(["#083344","#1e3a8a","#2dd4bf"]);
+  // Event listeners
+  datasetSelect.onchange = ()=> updateForDataset(datasetSelect.value);
+  groupSelect.onchange = ()=> {
+    const rows = rawData[current];
+    if(!rows) return;
+    const detected = detectNumericColumns(rows);
+    numericColumns = detected.numeric;
+    const grouped = groupColumns(numericColumns);
+    let chosen = getChosenGroup(grouped);
+    if(!chosen || chosen.length===0) chosen = numericColumns;
+    updateFeatureLists(chosen);
+    const stats = summarizeColumns(rows, chosen);
+    renderGroupBar(stats);
+    const colsByVar = stats.sort((a,b)=>b.std - a.std).slice(0,Math.min(30,parseInt(topNSelect.value)||10)).map(s=>s.col);
+    renderHeatmap(rows, colsByVar);
+  };
+  featureSelect.onchange = ()=> {
+    renderHistogram(rawData[current], featureSelect.value, parseInt(binsSelect.value));
+  };
+  binsSelect.onchange = ()=> {
+    renderHistogram(rawData[current], featureSelect.value, parseInt(binsSelect.value));
+  };
+  topNSelect.onchange = ()=> {
+    const rows = rawData[current];
+    const detected = detectNumericColumns(rows);
+    const grouped = groupColumns(detected.numeric);
+    let chosen = getChosenGroup(grouped); if(!chosen || chosen.length===0) chosen = detected.numeric;
+    const stats = summarizeColumns(rows, chosen);
+    renderGroupBar(stats);
+    const colsByVar = stats.sort((a,b)=>b.std - a.std).slice(0, Math.min(30, parseInt(topNSelect.value))).map(s=>s.col);
+    renderHeatmap(rows, colsByVar);
+  };
+  organismFilter.onchange = ()=> {
+    const rows = rawData[current] || [];
+    const sel = organismFilter.value;
+    const filtered = sel === '__ALL__' ? rows : rows.filter(r=>{
+      const keys = Object.keys(r);
+      const orgKey = keys.find(k=>k.toLowerCase()==='organism' || k.toLowerCase()==='organism(s)' || k.toLowerCase()==='organisms');
+      if(orgKey) return (r[orgKey]||'').toString() === sel;
+      return false;
+    });
+    const orgRes = buildOrganismCounts(rows);
+    renderOrganismChart(orgRes.counts);
+    // re-render other charts on filtered rows (hist, heatmap) using filtered set
+    // Use the same feature group as current
+    const detected = detectNumericColumns(rows);
+    const grouped = groupColumns(detected.numeric);
+    let chosen = getChosenGroup(grouped); if(!chosen || chosen.length===0) chosen = detected.numeric;
+    const stats = summarizeColumns(filtered, chosen);
+    renderGroupBar(stats);
+    if(featureSelect.value) renderHistogram(filtered, featureSelect.value, parseInt(binsSelect.value));
+    const colsByVar = stats.sort((a,b)=>b.std - a.std).slice(0, Math.min(30, parseInt(topNSelect.value))).map(s=>s.col);
+    renderHeatmap(filtered, colsByVar);
+  };
 
-  g.selectAll("g").data(data).enter().append("g")
-    .attr("transform",(d,i)=>`translate(0,${i*18})`)
-    .selectAll("rect").data(d=>d).enter().append("rect")
-    .attr("x",(d,i)=>i*18).attr("width",17).attr("height",17)
-    .attr("fill",d=>color(d));
-}
-
-/* ---------------- INIT ---------------- */
-async function init(key){
-  currentDataset=key;
-  const rows=await loadDataset(key);
-  document.getElementById("downloadBtn").href=FILES[key];
-
-  const nums=numericCols(key,rows);
-  const s=statsFor(key,rows,nums).sort((a,b)=>b.sd-a.sd);
-  const top=s.slice(0,10);
-
-  barChart("groupBar",top.map(x=>x.c),top.map(x=>x.sd));
-
-  document.getElementById("featureSelect").innerHTML=
-    nums.map(c=>`<option>${c}</option>`).join("");
-
-  renderHeatmap(rows,top.map(x=>x.c));
-}
-
-init("dataset1");
-
-document.getElementById("datasetSelect").onchange=e=>{
-  heatmapRendered=false;
-  document.getElementById("heatmap").innerHTML="";
-  init(e.target.value);
-};
-</script>
+  // Small note: graceful degrade if CSV cannot be fetched
+  </script>
 </body>
 </html>
