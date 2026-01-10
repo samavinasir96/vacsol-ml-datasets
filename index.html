@@ -1,325 +1,334 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8">
 <title>VacSol-ML Dataset Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot@4.3.0"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 
 <style>
 :root{
   --bg:#0f1724;
-  --card:#0b1220;
-  --muted:#9aa7bf;
-  --accent:#6ee7b7;
-  --blue:#60a5fa;
+  --card:#172036;
+  --text:#e5f0ff;
+  --muted:#9fb4d8;
+  --accent:#4cc9f0;
 }
 
-html,body{
+body{
   margin:0;
-  font-family:Inter,system-ui;
-  background:linear-gradient(180deg,#071227,#08182a);
-  color:#dce9f6;
+  font-family:Inter,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
 
-.wrap{
-  display:flex;
-  gap:20px;
-  padding:28px;
+header{
+  padding:24px;
+  text-align:center;
 }
 
-.card{
-  background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
-  border:1px solid rgba(255,255,255,0.04);
-  border-radius:12px;
-  padding:18px;
-}
+h1{margin:0;font-size:1.8rem}
+h2{margin:0 0 8px 0;font-size:1.1rem}
 
-.sidebar{
-  width:300px;
-  position:sticky;
-  top:28px;
-  height:calc(100vh - 56px);
-  overflow:auto;
-}
-
-.main{flex:1}
-
-h1{font-size:18px;margin:0}
-h2{font-size:16px;margin-bottom:8px}
-.small{font-size:13px;color:var(--muted)}
-
-select,button{
-  width:100%;
-  padding:9px;
-  border-radius:8px;
-  background:#0b1220;
-  color:#dce9f6;
-  border:1px solid rgba(255,255,255,0.05);
-}
-
-button{
-  cursor:pointer;
-  font-weight:600;
-}
-
-.grid{
+main{
+  padding:20px;
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
   gap:16px;
 }
 
-.full{grid-column:1/-1}
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+
+.card.full{grid-column:1/-1}
+
+.controls{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+
+select,input{
+  background:#0f1724;
+  color:var(--text);
+  border:1px solid #223055;
+  border-radius:8px;
+  padding:6px 10px;
+}
 
 .chart-box{
   height:260px;
-  position:relative;
 }
-
 .chart-box.small{height:220px}
+.chart-box.large{height:320px}
 
 .chart-box canvas{
   width:100%!important;
   height:100%!important;
 }
 
+figure{
+  margin:0;
+}
+figcaption{
+  font-size:.75rem;
+  color:var(--muted);
+  margin-top:6px;
+}
+
+/* Heatmap */
 #heatmap{
   max-height:420px;
   overflow:auto;
+  margin-top:12px;
 }
 
-.legend{
-  display:flex;
-  gap:14px;
-  font-size:12px;
-  margin-top:8px;
-}
+.hm-label.physio{fill:#4cc9f0}
+.hm-label.comp{fill:#f8961e}
+.hm-label.struct{fill:#90dbf4}
 
-.legend span{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.legend i{
-  width:14px;
-  height:14px;
-  border-radius:4px;
-  display:inline-block;
-}
-
-footer{
-  text-align:center;
-  font-size:13px;
-  color:var(--muted);
-  margin-top:18px;
-}
-
-@media(max-width:900px){
-  .wrap{flex-direction:column}
-  .sidebar{width:auto;height:auto}
-  .grid{grid-template-columns:1fr}
+.tooltip{
+  position:absolute;
+  pointer-events:none;
+  background:#000;
+  padding:6px 8px;
+  font-size:.75rem;
+  border-radius:6px;
+  opacity:0;
 }
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
-<div class="wrap">
 
-<!-- SIDEBAR -->
-<aside class="sidebar card">
-  <h1>VacSol-ML Explorer</h1>
-  <p class="small">Public interactive visualization of VacSol-ML datasets</p>
+<header>
+  <h1>VacSol-ML Dataset Interactive Explorer</h1>
+  <p style="color:var(--muted)">Exploratory visualization for physicochemical & sequence-derived features</p>
+</header>
 
-  <label class="small">Dataset</label>
-  <select id="datasetSelect">
-    <option value="dataset1">VacSol-ML Dataset</option>
-    <option value="dataset2">VacSol-ML Extended Dataset</option>
-  </select>
+<main>
 
-  <label class="small" style="margin-top:12px">Feature Group</label>
-  <select id="groupSelect">
-    <option value="physicochemical">Physicochemical</option>
-    <option value="immunogenicity">Immunogenicity</option>
-    <option value="timeseries">Time-series</option>
-    <option value="all">All numeric</option>
-  </select>
-
-  <button id="downloadBtn" style="margin-top:12px">⬇ Download CSV</button>
-</aside>
-
-<!-- MAIN -->
-<main class="main">
-
-<section class="card">
-<h2>Dataset overview</h2>
-
-<div class="grid">
-
-<!-- Variance -->
+<!-- Organism -->
 <div class="card">
-<h2>Top-variance features</h2>
-<div class="chart-box">
-<canvas id="varianceChart"></canvas>
-</div>
-<button onclick="exportChart('varianceChart')">Export PNG</button>
+  <figure>
+    <h2>Organism Distribution</h2>
+    <div class="chart-box small">
+      <canvas id="organismChart"></canvas>
+    </div>
+    <figcaption id="cap-org"></figcaption>
+  </figure>
 </div>
 
-<!-- Histogram -->
+<!-- Feature Boxplot -->
 <div class="card">
-<h2>Feature distribution</h2>
-<div class="chart-box small">
-<canvas id="histChart"></canvas>
+  <figure>
+    <h2>Feature Distribution (Boxplot)</h2>
+    <div class="controls">
+      <select id="boxFeature"></select>
+    </div>
+    <div class="chart-box">
+      <canvas id="boxChart"></canvas>
+    </div>
+    <figcaption id="cap-box"></figcaption>
+  </figure>
 </div>
-<button onclick="exportChart('histChart')">Export PNG</button>
+
+<!-- Feature Search -->
+<div class="card">
+  <figure>
+    <h2>Top Features by Variance</h2>
+    <div class="controls">
+      <input id="searchFeature" placeholder="Search feature…">
+    </div>
+    <div class="chart-box large">
+      <canvas id="varChart"></canvas>
+    </div>
+    <figcaption id="cap-var"></figcaption>
+  </figure>
 </div>
 
 <!-- Heatmap -->
 <div class="card full">
-<h2>Correlation heatmap</h2>
-<div id="heatmap"></div>
-
-<div class="legend">
-<span><i style="background:#002b36"></i> −1</span>
-<span><i style="background:#0b3a59"></i> 0</span>
-<span><i style="background:#2a7f6e"></i> +1</span>
+  <figure>
+    <h2>Feature Heatmap (Top Variable Features)</h2>
+    <div id="heatmap"></div>
+    <figcaption id="cap-hm"></figcaption>
+  </figure>
 </div>
-</div>
-
-</div>
-</section>
-
-<footer class="card">
-VacSol-ML Dataset Explorer · Built for public sharing & publication
-</footer>
 
 </main>
-</div>
+
+<div class="tooltip" id="tooltip"></div>
 
 <script>
-/* ================= CONFIG ================= */
-const COMMIT="0b22d317414da667d8224d16f56f36a7216d3a16";
-const BASE=`https://raw.githubusercontent.com/samavinasir96/vacsol-ml-datasets/${COMMIT}/`;
-const FILES={
- dataset1:BASE+"VacSol-ML%20Dataset.csv",
- dataset2:BASE+"VacSol-ML_DataSet_new_original.csv"
+const DATASET = "dataset.csv";
+const MAX_HEATMAP = 15;
+
+const featureTypes = {
+  "molecular_weight":"physio",
+  "length":"physio",
+  "gravy":"physio",
+  "aac_A":"comp",
+  "aac_G":"comp",
+  "helix":"struct"
 };
-const MAX_HEATMAP_FEATURES=15;
 
-/* ================= STATE ================= */
-let data={}, charts={};
+let data, numericCols;
 
-/* ================= LOAD ================= */
-function loadCSV(key){
- return new Promise(res=>{
-  Papa.parse(FILES[key],{
-   download:true,header:true,skipEmptyLines:true,
-   complete:r=>res(r.data)
-  });
- });
-}
+d3.csv(DATASET, d3.autoType).then(d=>{
+  data=d;
+  numericCols=Object.keys(d[0]).filter(c=>typeof d[0][c]==="number");
 
-Promise.all([loadCSV("dataset1"),loadCSV("dataset2")]).then(d=>{
- data.dataset1=d[0];
- data.dataset2=d[1];
- renderAll("dataset1");
+  initOrganism();
+  initBox();
+  initVariance();
+  initHeatmap();
 });
 
-/* ================= UTIL ================= */
-function numericCols(rows){
- return Object.keys(rows[0]).filter(c=>rows.every(r=>r[c]===""||!isNaN(r[c])));
-}
+/* ---------- Organism ---------- */
+function initOrganism(){
+  const counts=d3.rollup(data,v=>v.length,d=>d.organism);
+  const labels=[...counts.keys()];
+  const values=[...counts.values()];
 
-function groupCols(cols,type){
- const rules={
-  physicochemical:/weight|aa|hydropathy|isoelectric|aromatic/i,
-  immunogenicity:/mhc|bcell|rank|prob|antigen/i,
-  timeseries:/lag|CID/i
- };
- if(type==="all") return cols;
- return cols.filter(c=>rules[type]?.test(c));
-}
-
-function variance(vals){
- const m=vals.reduce((a,b)=>a+b,0)/vals.length;
- return vals.reduce((a,b)=>a+(b-m)**2,0)/(vals.length-1);
-}
-
-/* ================= RENDER ================= */
-function renderAll(key){
- const rows=data[key];
- document.getElementById("downloadBtn").onclick=()=>window.open(FILES[key]);
-
- const nums=numericCols(rows);
- const group=groupCols(nums,groupSelect.value);
- renderVariance(rows,group);
- renderHistogram(rows,group[0]);
- renderHeatmap(rows,group.slice(0,MAX_HEATMAP_FEATURES));
-}
-
-/* ===== VARIANCE BAR ===== */
-function renderVariance(rows,cols){
- const stats=cols.map(c=>{
-  const v=rows.map(r=>+r[c]).filter(x=>!isNaN(x));
-  return {c,var:variance(v)};
- }).sort((a,b)=>b.var-a.var).slice(0,10);
-
- if(charts.var)charts.var.destroy();
- charts.var=new Chart(varianceChart,{
-  type:"bar",
-  data:{labels:stats.map(s=>s.c),datasets:[{data:stats.map(s=>s.var),backgroundColor:"#6ee7b7"}]},
-  options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}
- });
-}
-
-/* ===== HIST ===== */
-function renderHistogram(rows,col){
- const vals=rows.map(r=>+r[col]).filter(x=>!isNaN(x));
- if(charts.hist)charts.hist.destroy();
- charts.hist=new Chart(histChart,{
-  type:"bar",
-  data:{labels:vals.slice(0,20),datasets:[{data:vals.slice(0,20),backgroundColor:"#60a5fa"}]},
-  options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}
- });
-}
-
-/* ===== HEATMAP ===== */
-function renderHeatmap(rows,cols){
- d3.select("#heatmap").html("");
- const size=18;
- const svg=d3.select("#heatmap").append("svg")
-  .attr("width",cols.length*size+120)
-  .attr("height",cols.length*size+120);
-
- const g=svg.append("g").attr("transform","translate(100,80)");
- const color=d3.scaleLinear().domain([-1,0,1]).range(["#002b36","#0b3a59","#2a7f6e"]);
-
- cols.forEach((c,i)=>{
-  cols.forEach((d,j)=>{
-   g.append("rect")
-    .attr("x",i*size).attr("y",j*size)
-    .attr("width",size-1).attr("height",size-1)
-    .attr("fill",color(Math.random()*2-1));
+  new Chart(organismChart,{
+    type:"bar",
+    data:{labels,datasets:[{data:values}]},
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      datasets:{bar:{barThickness:18}},
+    }
   });
- });
+
+  cap("cap-org",
+    "Bar chart showing the distribution of protein entries across organisms in the VacSol-ML dataset."
+  );
 }
 
-/* ===== EXPORT ===== */
-function exportChart(id){
- const a=document.createElement("a");
- a.href=document.getElementById(id).toDataURL("image/png");
- a.download=id+".png";
- a.click();
+/* ---------- Boxplot ---------- */
+function initBox(){
+  const sel=boxFeature;
+  numericCols.forEach(c=>sel.add(new Option(c,c)));
+  sel.onchange=drawBox;
+  drawBox();
 }
 
-/* ===== EVENTS ===== */
-datasetSelect.onchange=()=>renderAll(datasetSelect.value);
-groupSelect.onchange=()=>renderAll(datasetSelect.value);
+let boxChart;
+function drawBox(){
+  const f=boxFeature.value;
+  const vals=data.map(d=>d[f]).filter(v=>v!=null);
+
+  if(boxChart) boxChart.destroy();
+
+  boxChart=new Chart(boxChartEl,{
+    type:"boxplot",
+    data:{labels:[f],datasets:[{data:[vals]}]},
+    options:{maintainAspectRatio:false}
+  });
+
+  cap("cap-box",
+    `Boxplot summarizing the distribution of ${f}, highlighting median, interquartile range, and outliers.`
+  );
+}
+
+/* ---------- Variance ---------- */
+function initVariance(){
+  const stats=numericCols.map(c=>{
+    const v=data.map(d=>d[c]);
+    return {c,std:d3.deviation(v)};
+  }).sort((a,b)=>b.std-a.std).slice(0,12);
+
+  new Chart(varChart,{
+    type:"bar",
+    data:{
+      labels:stats.map(s=>s.c),
+      datasets:[{data:stats.map(s=>s.std)}]
+    },
+    options:{
+      indexAxis:"y",
+      maintainAspectRatio:false,
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label:ctx=>`Std Dev: ${ctx.raw.toFixed(3)}`
+          }
+        }
+      }
+    }
+  });
+
+  cap("cap-var",
+    "Horizontal bar chart ranking features by standard deviation, used as a proxy for variability and potential discriminative power."
+  );
+}
+
+/* ---------- Heatmap ---------- */
+function initHeatmap(){
+  const stats=numericCols.map(c=>{
+    const v=data.map(d=>d[c]);
+    return {c,std:d3.deviation(v)};
+  }).sort((a,b)=>b.std-a.std).slice(0,MAX_HEATMAP);
+
+  const cols=stats.map(s=>s.c);
+  const rows=data.slice(0,30);
+
+  const cell=18, m={t:80,l:160};
+  const w=cell*cols.length+m.l+20;
+  const h=cell*rows.length+m.t+20;
+
+  const svg=d3.select("#heatmap")
+    .append("svg")
+    .attr("width",w)
+    .attr("height",h);
+
+  const scale=d3.scaleSequential(d3.interpolateViridis)
+    .domain(d3.extent(rows.flatMap(r=>cols.map(c=>r[c]))));
+
+  svg.selectAll("rect")
+    .data(rows.flatMap((r,i)=>cols.map(c=>({r,i,c,v:r[c]}))))
+    .join("rect")
+    .attr("x",d=>m.l+cols.indexOf(d.c)*cell)
+    .attr("y",d=>m.t+d.i*cell)
+    .attr("width",cell)
+    .attr("height",cell)
+    .attr("fill",d=>scale(d.v))
+    .on("mousemove",(e,d)=>{
+      tooltip.style.opacity=1
+        .style.left=e.pageX+10+"px"
+        .style.top=e.pageY+10+"px"
+        .html(`${d.c}<br>${d.v}`);
+    })
+    .on("mouseout",()=>tooltip.style.opacity=0);
+
+  svg.selectAll("text.col")
+    .data(cols)
+    .join("text")
+    .attr("class",d=>"hm-label "+(featureTypes[d]||"physio"))
+    .attr("x",(d,i)=>m.l+i*cell+cell/2)
+    .attr("y",m.t-6)
+    .attr("transform",(d,i)=>`rotate(-45 ${m.l+i*cell} ${m.t-6})`)
+    .text(d=>d);
+
+  cap("cap-hm",
+    "Heatmap visualization of the top variable features across representative protein entries. Feature labels are color-coded by feature type (physicochemical, compositional, structural)."
+  );
+}
+
+/* ---------- Caption helper ---------- */
+function cap(id,text){
+  document.getElementById(id).innerText="Figure: "+text;
+}
 </script>
+
 </body>
 </html>
