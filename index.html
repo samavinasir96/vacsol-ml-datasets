@@ -217,18 +217,50 @@ function renderAll(key){
 }
 
 function renderClassDistribution(rows){
- const c={0:0,1:0};
- rows.forEach(r=>c[r.Final_predictions]++);
- if(charts.class) charts.class.destroy();
- charts.class=new Chart(classChart,{
-  type:"bar",
-  data:{
-   labels:["Non-vaccine (0)","Vaccine (1)"],
-   datasets:[{data:[c[0],c[1]],backgroundColor:["#60a5fa","#6ee7b7"]}]
-  },
-  options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}
- });
+  let pos=0, neg=0;
+  rows.forEach(r=>{
+    if(+r.Final_predictions === 1) pos++;
+    else neg++;
+  });
+
+  const total = pos + neg;
+  const posPct = (pos/total*100).toFixed(1);
+  const negPct = (neg/total*100).toFixed(1);
+
+  if(charts.class) charts.class.destroy();
+  charts.class = new Chart(classChart,{
+    type:"bar",
+    data:{
+      labels:["Dataset Composition"],
+      datasets:[
+        {
+          label:`Non-vaccine (0): ${neg} (${negPct}%)`,
+          data:[neg],
+          backgroundColor:"#60a5fa"
+        },
+        {
+          label:`Vaccine (1): ${pos} (${posPct}%)`,
+          data:[pos],
+          backgroundColor:"#6ee7b7"
+        }
+      ]
+    },
+    options:{
+      indexAxis:"y",
+      stacked:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{position:"bottom"},
+        tooltip:{enabled:true}
+      },
+      scales:{
+        x:{stacked:true},
+        y:{stacked:true}
+      }
+    }
+  });
 }
+
 
 function renderFeatureGroups(rows){
  const cols=Object.keys(rows[0]);
